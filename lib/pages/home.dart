@@ -1,3 +1,4 @@
+import 'package:ChemNOR_it/pages/search.dart';
 import 'package:ChemNOR_it/pages/setting.dart';
 import 'package:flutter/material.dart';
 
@@ -30,7 +31,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   static List<Widget> pages = <Widget>[
-    ChatWidget(apiKey: ''),
+    SearchWidget(apiKey: ''),
     ChatWidget(apiKey: ''),
     SettingPage(),
   ];
@@ -58,10 +59,10 @@ class _MyHomePageState extends State<MyHomePage> {
             });
           },
           items: [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'home'),
-            BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'chat'),
+            BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+            BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
             BottomNavigationBarItem(
-                icon: Icon(Icons.settings), label: 'setting')
+                icon: Icon(Icons.settings), label: 'Setting')
           ],
         ),
         appBar: AppBar(),

@@ -4,8 +4,8 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 
 import '../services/ChemnorApi.dart';
 
-class ChatWidget extends StatefulWidget {
-  const ChatWidget({
+class SearchWidget extends StatefulWidget {
+  const SearchWidget({
     required this.apiKey,
     super.key,
   });
@@ -13,10 +13,10 @@ class ChatWidget extends StatefulWidget {
   final String apiKey;
 
   @override
-  State<ChatWidget> createState() => _ChatWidgetState();
+  State<SearchWidget> createState() => _SearchWidgetState();
 }
 
-class _ChatWidgetState extends State<ChatWidget> {
+class _SearchWidgetState extends State<SearchWidget> {
   late final GenerativeModel _model;
   late final ChatSession _chat;
   final ScrollController _scrollController = ScrollController();
