@@ -1,5 +1,5 @@
-import 'package:ChemNOR_it/pages/search.dart';
-import 'package:ChemNOR_it/pages/setting.dart';
+import 'package:ChemNOR_it/screens/search.dart';
+import 'package:ChemNOR_it/screens/setting.dart';
 import 'package:flutter/material.dart';
 
 import 'chat.dart';
@@ -61,8 +61,7 @@ class _MyHomePageState extends State<MyHomePage> {
           items: [
             BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
             BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.settings), label: 'Setting')
+            BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Setting'),
           ],
         ),
         appBar: AppBar(),
