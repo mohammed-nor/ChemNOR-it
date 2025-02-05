@@ -44,7 +44,7 @@ app.*.map.json
 /android/app/release
 /lib/boiler/
 /lib/boiler2/
-/main2.dart
-/main3.dart
+/lib/main2.dart
+/lib/main3.dart
 
 
