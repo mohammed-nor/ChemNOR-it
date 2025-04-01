@@ -44,7 +44,7 @@ class ChemnorApi {
   Future<String> fetchResponse(String inputText) async {
     final gemini = Gemini.instance;
     final value = await gemini.text(inputText);
-    return value?.output ?? value?.content?.parts?.last.text ?? 'No response';
+    return value?.output ?? 'No response';
   }
 
   void scrollDown() {

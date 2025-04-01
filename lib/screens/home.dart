@@ -1,5 +1,5 @@
-import 'package:ChemNOR_it/screens/search.dart';
-import 'package:ChemNOR_it/screens/setting.dart';
+import 'package:chemnor_it/screens/search.dart';
+import 'package:chemnor_it/screens/setting.dart';
 import 'package:flutter/material.dart';
 
 import 'chat.dart';

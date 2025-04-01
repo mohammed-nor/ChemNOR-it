@@ -23,38 +23,37 @@ class JsonFetchScreen extends StatefulWidget {
 
 class _JsonFetchScreenState extends State<JsonFetchScreen> {
   final TextEditingController _controller = TextEditingController();
-  List<List> _dataa = [];
+  List<List<dynamic>> _dataa = []; // Specify the type as List<List<dynamic>>
   bool _isLoading = false;
   final finder = ChemNOR(genAiApiKey: 'your-api-key');
 
-  Future<void> _fetchData(String queryS) async {
+  Future<void> _fetchData(String query) async {
     setState(() => _isLoading = true);
     _dataa = [];
-    var query = [55, 60, 30];
-    var value;
-    for (value in query) {
-      try {
-        // Replace with your actual API endpoint
-        //final response = await http.get(Uri.parse('https://jsonplaceholder.typicode.com/posts?title=$query'));
-        final response = await http.get(Uri.parse('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$query/JSON'));
 
-        if (response.statusCode == 200) {
+    try {
+      final response = await http.get(Uri.parse('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$query/JSON'));
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData != null && jsonData['PC_Compounds'] != null && jsonData['PC_Compounds'].isNotEmpty) {
           setState(() {
-            List res = json.decode(response.body)['PC_Compounds'][0]['props'];
+            List<dynamic> res = jsonData['PC_Compounds'][0]['props'];
             _dataa.add(res);
             print(_dataa);
-            //print(json.decode(response.body)['PC_Compounds'][0]['props'][0]['urn']);
             _isLoading = false;
           });
         } else {
-          throw Exception('Failed to load data');
+          throw Exception('No data found for the given CID');
         }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
-        setState(() => _isLoading = false);
+      } else {
+        throw Exception('Failed to load data: ${response.statusCode}');
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+      setState(() => _isLoading = false);
     }
   }
 
@@ -92,7 +91,8 @@ class _JsonFetchScreenState extends State<JsonFetchScreen> {
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: item.map((item) {
+                              children: (item as List<dynamic>).map((item) {
+                                // Explicit cast here
                                 final label = item['urn']['label'];
                                 final name = item['urn']['name'];
                                 final value = item['value'];
