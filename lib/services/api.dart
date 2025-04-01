@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-const gmnapikey = 'AIzaSyCR80a7Gb4kSGd5rX9ingZhJKSw9b9hQgQ';
+
 
 // List of CIDs (Replace with your own)
 const List<int> cids = [2244, 236, 23925, 178];
