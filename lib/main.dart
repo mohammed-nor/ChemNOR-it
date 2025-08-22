@@ -1,4 +1,4 @@
-import 'package:chemnor_it/screens/home.dart';
+import 'package:chemnor__it/screens/home.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
@@ -27,10 +27,7 @@ class MyApp extends StatelessWidget {
       title: 'ChemNOR!',
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          brightness: Brightness.dark,
-          seedColor: const Color.fromARGB(255, 171, 222, 244),
-        ).copyWith(surface: Theme.of(context).colorScheme.inversePrimary),
+        colorScheme: ColorScheme.fromSeed(brightness: Brightness.dark, seedColor: const Color.fromARGB(255, 171, 222, 244)).copyWith(surface: Theme.of(context).colorScheme.inversePrimary),
       ),
       home: const MyHomePage(title: 'ChemNOR!'),
     );

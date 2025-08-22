@@ -4,10 +4,10 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:hive/hive.dart';
 
 class ChemnorApi {
-  late String apikey;
+   String apikey = 'AIzaSyCR80a7Gb4kSGd5rX9ingZhJKSw9b9hQgQ';
 
   void initiate(String api) {
-    apikey = api;
+    apikey = 'AIzaSyCR80a7Gb4kSGd5rX9ingZhJKSw9b9hQgQ';
   }
 
   void startchat(api) {}
@@ -23,7 +23,7 @@ class ChemnorApi {
   late final GenerativeModel gemini;
 
   GenerativeModel model(String apikey) {
-    return GenerativeModel(model: 'gemini-1.5-flash-latest', apiKey: apikey);
+    return GenerativeModel(model: 'gemini-2.5-flash', apiKey: 'AIzaSyCR80a7Gb4kSGd5rX9ingZhJKSw9b9hQgQ');
   }
 
   Future<void> initHive() async {
@@ -59,7 +59,7 @@ class ChemnorApi {
     );
   }
 
-  void showError(String message) {
+  void showError(BuildContext context, String message) {
     showDialog<void>(
       context: context,
       builder: (context) {

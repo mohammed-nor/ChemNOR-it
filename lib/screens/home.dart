@@ -1,5 +1,5 @@
-import 'package:chemnor_it/screens/search.dart';
-import 'package:chemnor_it/screens/setting.dart';
+import 'package:chemnor__it/screens/search2.dart';
+import 'package:chemnor__it/screens/setting.dart';
 import 'package:flutter/material.dart';
 
 import 'chat.dart';
@@ -23,18 +23,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-//vars and methods here
+  //vars and methods here
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
   }
 
-  static List<Widget> pages = <Widget>[
-    SearchWidget(apiKey: ''),
-    ChatWidget(apiKey: ''),
-    SettingPage(),
-  ];
+  static List<Widget> pages = <Widget>[SearchWidget2(), ChatWidget(), SettingPage()];
   int _bottomNavIndex = 0;
 
   @override
@@ -42,13 +38,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter + Generative AI',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          brightness: Brightness.dark,
-          seedColor: const Color.fromARGB(255, 200, 171, 244),
-        ),
-      ),
+      theme: ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(brightness: Brightness.dark, seedColor: const Color.fromARGB(255, 200, 171, 244))),
       home: Scaffold(
         body: pages[_bottomNavIndex],
         bottomNavigationBar: BottomNavigationBar(

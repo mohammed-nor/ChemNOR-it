@@ -1,55 +1,44 @@
-import 'package:chemnor_it/services/api.dart';
 import 'package:chem_nor/chem_nor.dart';
 import 'package:flutter/material.dart';
 
+import '../keys.dart';
+
 class SearchWidget extends StatefulWidget {
   const SearchWidget({
-    required this.apiKey,
     super.key,
   });
-
-  final String apiKey;
 
   @override
   State<SearchWidget> createState() => _SearchWidgetState();
 }
 
 class _SearchWidgetState extends State<SearchWidget> {
-  final ApiSrv = ChemNOR(genAiApiKey: gmnapikey);
-
-  @override
-  initState() {
-    super.initState();
-  }
+  final ApiSrv = ChemNOR(genAiApiKey: gmnkey);
 
   final TextEditingController _searchController = TextEditingController();
 
-  final List<int> _cidcompounds = [];
+  List<Map<String, dynamic>> _compoundsResult = [];
   bool _isLoading = false;
   String _errorMessage = '';
-  String title = '';
 
-  Future<String> _searchCompounds(String description) async {
-    String _compounds = '';
+  Future<void> _searchCompounds(String description) async {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
-      //title = tmp;
     });
 
     try {
-      final results = await ApiSrv.findListOfCompounds(description ?? '');
+      final results = await ApiSrv.findListOfCompounds(description);
       setState(() {
-        _compounds = results.toString();
         _isLoading = false;
+        _compoundsResult = results as List<Map<String, dynamic>>;
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error fetching compounds: ${e.toString()}';
         _isLoading = false;
+        _errorMessage = e.toString();
       });
     }
-    return _compounds;
   }
 
   @override
@@ -220,28 +209,18 @@ class _SearchWidgetState extends State<SearchWidget> {
             onSubmitted: (value) async => await _searchCompounds(value),
           ),
         ),
-        _isLoading
-            ? Center(child: CircularProgressIndicator())
-            : _errorMessage.isNotEmpty
-                ? Center(child: Text(_errorMessage))
-                : Expanded(
-                    child: FutureBuilder(
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.none) {
-                          return Center(child: Text("No Connection"));
-                        } else if (snapshot.connectionState == ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
-                        } else if (snapshot.hasError) {
-                          return Center(child: Text("Error: ${snapshot.error}"));
-                        } else if (!snapshot.hasData) {
-                          return Center(child: Text("No data available"));
-                        } else {
-                          return Center(child: Text(snapshot.data.toString()));
-                        }
-                      },
-                      future: _searchCompounds,
-                    ),
-                  ),
+        if (_isLoading)
+          Center(child: CircularProgressIndicator())
+        else if (_errorMessage.isNotEmpty)
+          Center(child: Text(_errorMessage))
+        else if (_compoundsResult.isNotEmpty)
+          const Expanded(
+            child: Text("heello"),
+          )
+        else
+          Center(
+            child: Text('Enter a description or SMILES string and press search.'),
+          ),
       ],
     );
   }
