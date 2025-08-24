@@ -1,13 +1,16 @@
+import 'package:chemnor__it/keys.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gemini/flutter_gemini.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:chem_nor/chem_nor.dart'; // Use chem_nor package
 import 'package:hive/hive.dart';
 
 class ChemnorApi {
-   String apikey = 'AIzaSyCR80a7Gb4kSGd5rX9ingZhJKSw9b9hQgQ';
+  String apikey = gmnkey;
+  late final ChemNOR chemnor = ChemNOR(genAiApiKey: apikey);
 
   void initiate(String api) {
-    apikey = 'AIzaSyCR80a7Gb4kSGd5rX9ingZhJKSw9b9hQgQ';
+    apikey = api;
+    // Re-initialize chemnor with new API key if needed
+    // chemnor = ChemNOR(genAiApiKey: apikey);
   }
 
   void startchat(api) {}
@@ -20,10 +23,10 @@ class ChemnorApi {
   late Box<String> _settingsBox;
   late final BuildContext context;
   late bool _loading;
-  late final GenerativeModel gemini;
 
-  GenerativeModel model(String apikey) {
-    return GenerativeModel(model: 'gemini-2.5-flash', apiKey: 'AIzaSyCR80a7Gb4kSGd5rX9ingZhJKSw9b9hQgQ');
+  // Use chemnor for model-like functionality
+  ChemNOR model(String apikey) {
+    return ChemNOR(genAiApiKey: apikey);
   }
 
   Future<void> initHive() async {
@@ -42,20 +45,21 @@ class ChemnorApi {
   }
 
   Future<String> fetchResponse(String inputText) async {
-    final gemini = Gemini.instance;
-    final value = await gemini.text(inputText);
-    return value?.output ?? 'No response';
+    // Use chemnor's chat method instead of Gemini
+    final value = await chemnor.chemist(inputText);
+    return value ?? 'No response';
+  }
+
+  // Example chemist method for chemistry actions
+  Future<String> chemist(String cid) async {
+    // You can implement this method using chemnor's API as needed
+    final result = await chemnor.chemist(cid);
+    return result ?? 'No chemist result';
   }
 
   void scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(
-          milliseconds: 750,
-        ),
-        curve: Curves.easeOutCirc,
-      ),
+      (_) => _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 750), curve: Curves.easeOutCirc),
     );
   }
 
@@ -65,16 +69,14 @@ class ChemnorApi {
       builder: (context) {
         return AlertDialog(
           title: const Text('Something went wrong !!'),
-          content: SingleChildScrollView(
-            child: SelectableText(message),
-          ),
+          content: SingleChildScrollView(child: SelectableText(message)),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
               child: const Text('OK'),
-            )
+            ),
           ],
         );
       },

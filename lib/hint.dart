@@ -6,6 +6,8 @@ import 'package:chem_nor/chem_nor.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -17,6 +19,8 @@ class MyApp extends StatelessWidget {
 }
 
 class JsonFetchScreen extends StatefulWidget {
+  const JsonFetchScreen({super.key});
+
   @override
   _JsonFetchScreenState createState() => _JsonFetchScreenState();
 }

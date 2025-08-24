@@ -8,11 +8,7 @@ void main() => runApp(MyApp());
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'JSON Fetch Demo',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: JsonFetchScreen(),
-    );
+    return MaterialApp(title: 'JSON Fetch Demo', theme: ThemeData(primarySwatch: Colors.blue), home: JsonFetchScreen());
   }
 }
 
@@ -50,9 +46,7 @@ class _JsonFetchScreenState extends State<JsonFetchScreen> {
         throw Exception('Failed to load data: ${response.statusCode}');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       setState(() => _isLoading = false);
     }
   }
@@ -65,72 +59,62 @@ class _JsonFetchScreenState extends State<JsonFetchScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            TextField(
-              controller: _controller,
-              decoration: const InputDecoration(
-                labelText: 'Enter search query',
-                suffixIcon: Icon(Icons.search),
-              ),
-            ),
+            TextField(controller: _controller, decoration: const InputDecoration(labelText: 'Enter search query', suffixIcon: Icon(Icons.search))),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => _fetchData(_controller.text),
-              child: const Text('Search'),
-            ),
+            ElevatedButton(onPressed: () => _fetchData(_controller.text), child: const Text('Search')),
             const SizedBox(height: 16),
             Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                      itemCount: _dataa.length,
-                      itemBuilder: (context, index) {
-                        final item = _dataa[index];
-                        return Card(
-                          margin: const EdgeInsets.all(8.0),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: (item as List<dynamic>).map((item) {
-                                // Explicit cast here
-                                final label = item['urn']['label'];
-                                final name = item['urn']['name'];
-                                final value = item['value'];
-                                String displayValue = "";
+              child:
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : ListView.builder(
+                        itemCount: _dataa.length,
+                        itemBuilder: (context, index) {
+                          final item = _dataa[index];
+                          return Card(
+                            margin: const EdgeInsets.all(8.0),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children:
+                                    (item).map((item) {
+                                      // Explicit cast here
+                                      final label = item['urn']['label'];
+                                      final name = item['urn']['name'];
+                                      final value = item['value'];
+                                      String displayValue = "";
 
-                                // Handle different data types
-                                switch (item['urn']['datatype']) {
-                                  case 1: // String
-                                    displayValue = value['sval'] ?? "N/A";
-                                    break;
-                                  case 5: // Integer
-                                    displayValue = value['ival']?.toString() ?? "N/A";
-                                    break;
-                                  case 7: // Float
-                                    displayValue = value['fval']?.toString() ?? "N/A";
-                                    break;
-                                  case 16: // Binary (Fingerprint)
-                                    //displayValue = "Fingerprint data (not displayed)";
-                                    displayValue = value['binary']?.toString() ?? "N/A";
-                                    ;
-                                    break;
-                                  default:
-                                    displayValue = "Unknown data type";
-                                }
+                                      // Handle different data types
+                                      switch (item['urn']['datatype']) {
+                                        case 1: // String
+                                          displayValue = value['sval'] ?? "N/A";
+                                          break;
+                                        case 5: // Integer
+                                          displayValue = value['ival']?.toString() ?? "N/A";
+                                          break;
+                                        case 7: // Float
+                                          displayValue = value['fval']?.toString() ?? "N/A";
+                                          break;
+                                        case 16: // Binary (Fingerprint)
+                                          //displayValue = "Fingerprint data (not displayed)";
+                                          displayValue = value['binary']?.toString() ?? "N/A";
+                                          ;
+                                          break;
+                                        default:
+                                          displayValue = "Unknown data type";
+                                      }
 
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                  child: Text(
-                                    "$label ${name != null ? "$name" : ""}: $displayValue",
-                                    style: const TextStyle(fontSize: 16.0),
-                                  ),
-                                );
-                              }).toList(),
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                        child: Text("$label ${name != null ? "$name" : ""}: $displayValue", style: const TextStyle(fontSize: 16.0)),
+                                      );
+                                    }).toList(),
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
             ),
           ],
         ),

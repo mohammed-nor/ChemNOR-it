@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
-
+import 'package:gpt_markdown/gpt_markdown.dart';
+import 'package:hive/hive.dart';
 import '../services/ChemnorApi.dart';
+import '../screens/settings_controller.dart';
 
 class ChatWidget extends StatefulWidget {
   final Map<String, dynamic>? compoundData;
@@ -14,25 +14,22 @@ class ChatWidget extends StatefulWidget {
 }
 
 class _ChatWidgetState extends State<ChatWidget> {
-  late final GenerativeModel _model;
-  late final ChatSession _chat;
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
   final FocusNode _textFieldFocus = FocusNode();
   final List<({Image? image, String? text, bool fromUser})> _generatedContent = <({Image? image, String? text, bool fromUser})>[];
   bool _loading = false;
-  ChemnorApi ApiSrv = ChemnorApi();
+  final ChemnorApi ApiSrv = ChemnorApi();
+
   @override
   void initState() {
     super.initState();
-    _model = ApiSrv.model('AIzaSyCni1xHMgBlzjQWUXj9f-dcyNhpcfRgKUk');
-    _chat = _model.startChat();
 
-    // If compoundData is provided, send an initial message to Gemini about the compound
+    // If compoundData is provided, send an initial message to ChemNOR about the compound
     if (widget.compoundData != null) {
       final compoundInfo = widget.compoundData!.entries.map((e) => '${e.key}: ${e.value}').join('\n');
       final initialPrompt =
-          "Let's discuss the following chemical compound:\n$compoundInfo\n . "
+          "Let's discuss the following chemical compound:\n$compoundInfo\n"
           "You are an expert chemistry assistant. Answer questions and provide insights about this compound based on its data above.";
       _sendInitialCompoundMessage(initialPrompt);
     }
@@ -50,11 +47,19 @@ class _ChatWidgetState extends State<ChatWidget> {
     });
 
     try {
+      String contextText = '';
+      if (widget.compoundData != null) {
+        contextText = widget.compoundData!.entries.map((e) => '${e.key}: ${e.value}').join('\n');
+        contextText = "Compound context:\n$contextText\n\n$message";
+      } else {
+        contextText = message;
+      }
+
       _generatedContent.add((image: null, text: message, fromUser: false));
-      final response = await _chat.sendMessage(Content.text(message));
-      final text = processAIText(response.text);
-      if (text != null) {
-        _generatedContent.add((image: null, text: processAIText(text), fromUser: false));
+      final response = await ApiSrv.fetchResponse(contextText);
+      final text = processAIText(response);
+      if (text.isNotEmpty) {
+        _generatedContent.add((image: null, text: text, fromUser: false));
       }
       setState(() {
         _loading = false;
@@ -77,75 +82,64 @@ class _ChatWidgetState extends State<ChatWidget> {
       border: OutlineInputBorder(borderRadius: const BorderRadius.all(Radius.circular(14)), borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary)),
       focusedBorder: OutlineInputBorder(borderRadius: const BorderRadius.all(Radius.circular(14)), borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary)),
     );
-    const String _apiKey = 'AIzaSyCni1xHMgBlzjQWUXj9f-dcyNhpcfRgKUk';
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.compoundData?['name'] != null ? 'Chat: ${widget.compoundData!['name']}' : 'Chat')),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (widget.compoundData != null)
-              /*Card(
-                color: Theme.of(context).colorScheme.secondaryContainer,
-                margin: const EdgeInsets.only(bottom: 12),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: widget.compoundData!.entries.map((entry) => Text('${entry.key}: ${entry.value}')).toList(),
-                  ),
-                ),
-              ),*/
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(title: Text(widget.compoundData?['name'] != null ? 'Chat: ${widget.compoundData!['name']}' : 'Chat')),
+        body: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Expanded(
-                child:
-                    _apiKey.isNotEmpty
-                        ? ListView.builder(
-                          controller: _scrollController,
-                          itemBuilder: (context, idx) {
-                            final content = _generatedContent[idx];
-                            return MessageWidget(text: content.text, image: content.image, isFromUser: content.fromUser);
-                          },
-                          itemCount: _generatedContent.length,
-                        )
-                        : ListView(
-                          children: const [
-                            Text(
-                              'No API key found. Please provide an API Key using '
-                              "'--dart-define' to set the 'API_KEY' declaration.",
-                            ),
-                          ],
-                        ),
+                child: ListView.builder(
+                  controller: _scrollController,
+                  itemBuilder: (context, idx) {
+                    final content = _generatedContent[idx];
+                    return MessageWidget(text: content.text, image: content.image, isFromUser: content.fromUser);
+                  },
+                  itemCount: _generatedContent.length,
+                ),
               ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 15),
-              child: Row(
-                children: [
-                  Expanded(child: TextField(autofocus: true, focusNode: _textFieldFocus, decoration: textFieldDecoration, controller: _textController, onSubmitted: _sendChatMessage)),
-                  const SizedBox.square(dimension: 15),
-                  IconButton(
-                    onPressed:
-                        !_loading
-                            ? () async {
-                              //ApiSrv.sendImagePrompt(_textController.text);
-                            }
-                            : null,
-                    icon: Icon(Icons.image, color: _loading ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.primary),
-                  ),
-                  if (!_loading)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 15),
+                child: Row(
+                  children: [
+                    Expanded(child: TextField(autofocus: true, focusNode: _textFieldFocus, decoration: textFieldDecoration, controller: _textController, onSubmitted: _sendChatMessage)),
+                    const SizedBox.square(dimension: 15),
                     IconButton(
-                      onPressed: () async {
-                        _sendChatMessage(_textController.text);
-                      },
-                      icon: Icon(Icons.send, color: Theme.of(context).colorScheme.primary),
-                    )
-                  else
-                    const CircularProgressIndicator(),
-                ],
+                      onPressed:
+                          !_loading
+                              ? () async {
+                                // Chemistry-related action: call chemist method from ChemnorApi
+                                if (widget.compoundData != null && widget.compoundData!['cid'] != null) {
+                                  final cid = widget.compoundData!['cid'].toString();
+                                  final result = await ApiSrv.chemist(cid);
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Chemist result: $result')));
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No compound selected.')));
+                                }
+                              }
+                              : null,
+                      icon: Icon(
+                        Icons.science, // Chemistry-related icon
+                        color: _loading ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    if (!_loading)
+                      IconButton(
+                        onPressed: () async {
+                          _sendChatMessage(_textController.text);
+                        },
+                        icon: Icon(Icons.send, color: Theme.of(context).colorScheme.primary),
+                      )
+                    else
+                      const CircularProgressIndicator(),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -159,10 +153,28 @@ class _ChatWidgetState extends State<ChatWidget> {
     });
 
     try {
-      final response = await _chat.sendMessage(Content.text(message));
-      final text = response.text;
+      // Build context: compound info + chat history + current question
+      String prompt = '';
+      if (widget.compoundData != null) {
+        final compoundContext = widget.compoundData!.entries.map((e) => '${e.key}: ${e.value}').join('\n');
+        prompt += "Compound context:\n$compoundContext\n\n";
+      }
+      // Add previous chat history
+      if (_generatedContent.isNotEmpty) {
+        prompt += "Chat history:\n";
+        for (final msg in _generatedContent) {
+          if (msg.text != null) {
+            prompt += msg.fromUser ? "User: ${msg.text}\n" : "AI: ${msg.text}\n";
+          }
+        }
+        prompt += "\n";
+      }
+      // Add the new user question
+      prompt += "Answer the following question about the compound above:\n$message";
+
+      final response = await ApiSrv.fetchResponse(prompt);
       setState(() {
-        _generatedContent.add((image: null, text: processAIText(text ?? 'No response from AI.'), fromUser: false));
+        _generatedContent.add((image: null, text: processAIText(response), fromUser: false));
         _loading = false;
       });
       // Scroll to bottom after a short delay
@@ -189,19 +201,31 @@ class MessageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAI = !isFromUser;
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: isFromUser ? MainAxisAlignment.end : MainAxisAlignment.start,
       children: [
+        if (image != null) image!,
         Flexible(
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 520),
-            decoration: BoxDecoration(color: !isFromUser ? Colors.transparent : Theme.of(context).colorScheme.secondaryContainer, borderRadius: BorderRadius.circular(18)),
-            padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-            margin: const EdgeInsets.only(bottom: 8),
-            child: Column(
+            margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: isFromUser ? const Color.fromARGB(255, 40, 0, 114) : Colors.transparent, borderRadius: BorderRadius.circular(12)),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (text case final text?) MarkdownBody(data: text, styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(p: Theme.of(context).textTheme.bodyMedium)),
-                if (image case final image?) image,
+                Expanded(child: text != null ? GptMarkdown(text!) : const SizedBox.shrink()),
+                if (isAI && text != null)
+                  IconButton(
+                    icon: const Icon(Icons.bookmark_add, color: Colors.amber, size: 22),
+                    tooltip: 'Save to history',
+                    onPressed: () async {
+                      final box = Hive.box<String>('historyBox');
+                      await box.add(text!);
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved to history!')));
+                    },
+                  ),
               ],
             ),
           ),

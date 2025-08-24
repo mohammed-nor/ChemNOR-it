@@ -1,3 +1,4 @@
+import 'package:chemnor__it/screens/history.dart';
 import 'package:chemnor__it/screens/search2.dart';
 import 'package:chemnor__it/screens/setting.dart';
 import 'package:flutter/material.dart';
@@ -30,31 +31,33 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
-  static List<Widget> pages = <Widget>[SearchWidget2(), ChatWidget(), SettingPage()];
+  static List<Widget> pages = <Widget>[SearchWidget2(), ChatWidget(), HistoryWidget(), SettingPage()];
   int _bottomNavIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter + Generative AI',
-      theme: ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(brightness: Brightness.dark, seedColor: const Color.fromARGB(255, 200, 171, 244))),
-      home: Scaffold(
-        body: pages[_bottomNavIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _bottomNavIndex,
-          onTap: (idx) {
-            setState(() {
-              _bottomNavIndex = idx;
-            });
-          },
-          items: [
-            BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-            BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
-            BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Setting'),
-          ],
-        ),
-        appBar: AppBar(),
+    return Scaffold(
+      body: pages[_bottomNavIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _bottomNavIndex,
+        onTap: (idx) {
+          setState(() {
+            _bottomNavIndex = idx;
+          });
+        },
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: const Color.fromARGB(255, 255, 245, 210),
+        unselectedItemColor: Colors.white70,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
+        showUnselectedLabels: true,
+        elevation: 12,
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_rounded), label: 'Chat'),
+          BottomNavigationBarItem(icon: Icon(Icons.history_edu_rounded), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Setting'),
+        ],
       ),
     );
   }
