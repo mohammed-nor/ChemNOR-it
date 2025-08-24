@@ -65,10 +65,12 @@ class _SearchWidgetState extends State<SearchWidget2> {
         throw const FormatException("API returned an unexpected JSON format");
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Error: ${e.toString()}';
       });
     } finally {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });

@@ -1,5 +1,6 @@
 import 'package:chemnor__it/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:hive_flutter/adapters.dart';
@@ -41,8 +42,25 @@ class _HistoryWidgetState extends State<HistoryWidget> {
               final value = box.get(key);
               return Card(
                 color: Colors.deepPurple.withOpacity(0.1),
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                child: ListTile(title: GptMarkdown(value ?? ''), trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => box.delete(key))),
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0, right: 40.0, left: 8.0, bottom: 8.0),
+                      child: ListTile(
+                        title: GptMarkdown(value ?? ''),
+                        onLongPress:
+                            value != null
+                                ? () {
+                                  Clipboard.setData(ClipboardData(text: value));
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied to clipboard!')));
+                                }
+                                : null,
+                      ),
+                    ),
+                    Positioned(top: 0, right: 0, child: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => box.delete(key), tooltip: 'Delete')),
+                  ],
+                ),
               );
             },
           );
