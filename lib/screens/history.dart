@@ -1,3 +1,13 @@
+/// A widget that displays a list of saved history messages from a Hive box.
+/// 
+/// The [HistoryWidget] shows each saved message in a card, allowing users to:
+/// - View the message rendered as markdown.
+/// - Copy the message to the clipboard by long-pressing on it.
+/// - Delete individual messages using the delete icon.
+/// 
+/// If there are no saved messages, a placeholder text is shown.
+/// 
+/// The widget listens to changes in the Hive box and updates the UI accordingly.
 import 'package:chemnor__it/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

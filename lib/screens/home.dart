@@ -1,5 +1,18 @@
+/// The main home page widget of the application, providing navigation between
+/// Search, Chat, History, and Setting screens using a bottom navigation bar.
+///
+/// This widget is stateful and manages the currently selected tab index.
+/// The `title` parameter is required and is used for configuration purposes.
+///
+/// The available pages are:
+/// - [SearchWidget]: Search functionality
+/// - [ChatWidget]: Chat interface
+/// - [HistoryWidget]: View search/chat history
+/// - [SettingPage]: Application settings
+///
+/// The bottom navigation bar allows switching between these pages.
 import 'package:chemnor__it/screens/history.dart';
-import 'package:chemnor__it/screens/search2.dart';
+import 'package:chemnor__it/screens/search.dart';
 import 'package:chemnor__it/screens/setting.dart';
 import 'package:flutter/material.dart';
 
@@ -31,7 +44,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
-  static List<Widget> pages = <Widget>[SearchWidget2(), ChatWidget(), HistoryWidget(), SettingPage()];
+  static List<Widget> pages = <Widget>[SearchWidget(), ChatWidget(), HistoryWidget(), SettingPage()];
   int _bottomNavIndex = 0;
 
   @override

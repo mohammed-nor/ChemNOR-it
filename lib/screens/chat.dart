@@ -1,3 +1,24 @@
+/// A chat widget for interacting with a chemistry assistant AI about a specific chemical compound.
+///
+/// If [compoundData] is provided, the chat initializes with context about the compound,
+/// allowing the user to ask questions and receive insights from the AI.
+///
+/// Features:
+/// - Displays chat history with user and AI messages.
+/// - Allows sending new prompts and receives AI responses.
+/// - Chemistry-specific actions via the science icon (calls chemist method).
+/// - AI responses can be saved to history.
+/// - Supports markdown rendering for AI messages.
+///
+/// Requires:
+/// - [ChemnorApi] for backend communication.
+/// - [Hive] for local history storage.
+/// - [gpt_markdown] for markdown rendering.
+///
+/// UI:
+/// - Displays compound name in the AppBar if available.
+/// - Shows loading indicator while awaiting AI response.
+/// - Provides input field and action buttons for user interaction.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';

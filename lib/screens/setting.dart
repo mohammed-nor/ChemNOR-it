@@ -1,4 +1,14 @@
-import 'package:chemnor__it/keys.dart';
+/// A settings page that allows users to configure application preferences.
+///
+/// This page provides the following features:
+/// - Select the Large Language Model (LLM) to use (currently only "Gemini API" is available).
+/// - Enter and save a Gemini API key, with feedback on save.
+/// - Display the currently used API key (either the user-provided key or a default key).
+/// - Adjust the font size using a slider.
+///
+/// The settings are managed via a [settingsController] and changes are reflected in the UI.
+/// The [AppSettings] model holds the current settings state.
+import 'package:chemnor__it/key.dart';
 import 'package:chemnor__it/main.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
