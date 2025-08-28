@@ -1,6 +1,6 @@
 # ChemNOR It!
 
-ChemNOR is a Flutter application that serves as an intelligent chemistry assistant. It leverages AI (via ChemNOR and Gemini APIs) to help users search for, analyze, and chat about chemical compounds. The app features a modern UI, persistent history, and chemistry-specific tools.
+ChemNOR is a Flutter application that serves as an intelligent chemistry assistant. It leverages AI (via ChemNOR and ChemPUB APIs) to help users search for, analyze, and chat about chemical compounds. The app features a modern UI, persistent history, and chemistry-specific tools.
 
 ## Features
 
