@@ -15,7 +15,7 @@ import 'package:chemnor__it/screens/history.dart';
 import 'package:chemnor__it/screens/search.dart';
 import 'package:chemnor__it/screens/setting.dart';
 import 'package:flutter/material.dart';
-
+import 'general_chat.dart';
 import 'chat.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -44,7 +44,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
-  static List<Widget> pages = <Widget>[SearchWidget(), ChatWidget(), HistoryWidget(), SettingPage()];
+  static List<Widget> pages = <Widget>[SearchWidget(), GeneralChatPage(), HistoryWidget(), SettingPage()];
   int _bottomNavIndex = 0;
 
   @override

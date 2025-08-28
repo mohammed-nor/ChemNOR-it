@@ -234,10 +234,10 @@ class MessageWidget extends StatelessWidget {
             margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(color: isFromUser ? const Color.fromARGB(255, 40, 0, 114) : Colors.transparent, borderRadius: BorderRadius.circular(12)),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Expanded(child: text != null ? GptMarkdown(text!) : const SizedBox.shrink()),
+                if (text != null) GptMarkdown(text!),
                 if (isAI && text != null)
                   IconButton(
                     icon: const Icon(Icons.bookmark_add, color: Colors.amber, size: 22),

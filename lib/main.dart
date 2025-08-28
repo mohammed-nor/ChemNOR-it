@@ -1,5 +1,5 @@
 /// The entry point of the ChemNOR app.
-/// 
+///
 /// Initializes Flutter bindings, sets up Hive for local storage, and opens
 /// required Hive boxes for settings and history. Instantiates the global
 /// [SettingsController] with the settings box, then runs the app.
@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
       builder: (context, settings, _) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'Flutter + Generative AI',
+          title: 'ChemNOR It!',
           theme: ThemeData(
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(brightness: Brightness.dark, seedColor: const Color.fromARGB(255, 200, 171, 244)),

@@ -1,8 +1,8 @@
 /// A stateful widget that provides a search interface for chemical compounds.
-/// 
+///
 /// The [SearchWidget] allows users to enter a prompt describing chemical compounds,
 /// sends the prompt to an API, and displays a list of matching compounds with their details.
-/// 
+///
 /// Features:
 /// - Text input for user prompts.
 /// - Asynchronous API call to fetch compounds based on the prompt.
@@ -10,11 +10,11 @@
 /// - Shows error messages if the API call fails or returns unexpected data.
 /// - Presents results as a list of cards, each showing compound information and an image (if available).
 /// - Tapping a compound navigates to a chat screen with detailed compound data.
-/// 
+///
 /// Dependencies:
 /// - Requires [ChemNOR] API service and a valid API key.
 /// - Uses [settingsController] for font size and API key configuration.
-/// 
+///
 /// Example usage:
 /// ```dart
 /// SearchWidget()
@@ -184,29 +184,53 @@ class _SearchWidgetState extends State<SearchWidget> {
                       final cid = compound['cid']?.toString();
                       final imageUrl = cid != null ? 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/PNG' : null;
                       return Card(
-                        color: Colors.deepPurple.withOpacity(0.1), // Make the card transparent like a bubble
-                        elevation: 0, // Optional: remove shadow for a more "bubble" look
-                        margin: const EdgeInsets.symmetric(vertical: 8.0),
+                        color: Colors.deepPurple.withOpacity(0.1),
+                        elevation: 0,
+                        margin: const EdgeInsets.symmetric(vertical: 12.0),
                         child: InkWell(
                           onTap: () {
                             Navigator.push(context, MaterialPageRoute(builder: (context) => ChatWidget(compoundData: compound)));
                           },
-                          child: ListTile(
-                            leading:
-                                imageUrl != null
-                                    ? ClipRect(
-                                      child: Align(
-                                        alignment: Alignment.center,
-                                        widthFactor: 0.7, // Show 70% of the width, centered
-                                        heightFactor: 0.7, // Show 70% of the height, centered
-                                        child: Image.network(imageUrl, width: 96, height: 96, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.image_not_supported, size: 48)),
-                                      ),
-                                    )
-                                    : const Icon(Icons.image_not_supported, size: 48),
-                            title: Text(compound['name'] ?? 'N/A'),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: compound.entries.where((entry) => entry.key != 'name').map((entry) => Text('${entry.key}: ${entry.value}')).toList(),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                // Left side: Image
+                                Container(
+                                  width: 180,
+                                  height: 180,
+                                  clipBehavior: Clip.hardEdge,
+                                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+                                  child:
+                                      imageUrl != null
+                                          ? OverflowBox(
+                                            maxWidth: 290, // 180 / 0.8 = 225
+                                            maxHeight: 290, // 180 / 0.8 = 225
+                                            child: Center(
+                                              child: Image.network(imageUrl, fit: BoxFit.cover, width: 225, height: 225, errorBuilder: (c, e, s) => const Icon(Icons.image_not_supported, size: 60)),
+                                            ),
+                                          )
+                                          : const Icon(Icons.image_not_supported, size: 60),
+                                ),
+
+                                const SizedBox(width: 16),
+
+                                // Right side: Compound details
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(compound['name'] ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                      const SizedBox(height: 8),
+                                      ...compound.entries
+                                          .where((entry) => entry.key != 'name')
+                                          .map((entry) => Padding(padding: const EdgeInsets.only(bottom: 4.0), child: Text('${entry.key}: ${entry.value}')))
+                                          .toList(),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
