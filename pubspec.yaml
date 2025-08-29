@@ -43,7 +43,7 @@ dependencies:
   provider: ^6.0.1
   flutter_dotenv: ^6.0.0
   intl: ^0.20.2
-  chem_nor: ^0.3.2
+  chem_nor: ^0.4.1
   flutter_markdown: ^0.7.7+1
   gpt_markdown: ^1.1.2
   flutter_math_fork: 0.7.3

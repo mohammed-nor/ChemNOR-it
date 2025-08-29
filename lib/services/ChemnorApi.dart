@@ -46,7 +46,7 @@ class ChemnorApi {
 
   Future<String> fetchResponse(String inputText) async {
     // Use chemnor's chat method instead of Gemini
-    final value = await chemnor.chemist(inputText);
+    final value = await chemnor.chat(inputText);
     return value ?? 'No response';
   }
 

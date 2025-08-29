@@ -37,10 +37,10 @@ packages:
     dependency: "direct main"
     description:
       name: chem_nor
-      sha256: "1bc16f8d6d5a5238cf8eaa23f5957f9ad5c586e17c3f655d7dd3db0a94ba5735"
+      sha256: "81ce6c65eb50ac9beebfd7ee9c720ec8f74292505a4b5dccee1582d153a336db"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.2"
+    version: "0.4.1"
   clock:
     dependency: transitive
     description:
