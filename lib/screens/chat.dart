@@ -364,7 +364,7 @@ class _ChatPageState extends State<ChatPage> {
             content: TextField(
               decoration: const InputDecoration(hintText: 'Enter the chemical application you desired'),
               controller: cidController,
-              keyboardType: TextInputType.number,
+              //keyboardType: TextInputType.number,
               onSubmitted: (value) => Navigator.of(context).pop(value),
             ),
             actions: [

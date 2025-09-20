@@ -23,6 +23,8 @@ import 'package:chem_nor/chem_nor.dart';
 import 'package:chemnor__it/main.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
 
 import '../key.dart';
 import '../screens/chat.dart'; // Add this import for navigation
@@ -96,6 +98,21 @@ class _SearchWidgetState extends State<SearchWidget> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<String> getPublicationCount(String cid) async {
+    try {
+      final response = await http.get(Uri.parse('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/xrefs/PubMedID/JSON'));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final pubmedIds = data['InformationList']['Information'][0]['PubMedID'] as List?;
+        return pubmedIds?.length.toString() ?? '0';
+      }
+    } catch (e) {
+      print('Error fetching publication count: $e');
+    }
+    return 'N/A';
   }
 
   @override
@@ -196,26 +213,58 @@ class _SearchWidgetState extends State<SearchWidget> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                // Left side: Image
-                                Container(
-                                  width: 180,
-                                  height: 180,
-                                  clipBehavior: Clip.hardEdge,
-                                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
-                                  child:
-                                      imageUrl != null
-                                          ? OverflowBox(
-                                            maxWidth: 290, // 180 / 0.8 = 225
-                                            maxHeight: 290, // 180 / 0.8 = 225
-                                            child: Center(
-                                              child: Image.network(imageUrl, fit: BoxFit.cover, width: 225, height: 225, errorBuilder: (c, e, s) => const Icon(Icons.image_not_supported, size: 60)),
-                                            ),
-                                          )
-                                          : const Icon(Icons.image_not_supported, size: 60),
+                                // Left side: Image and Scholar info
+                                Column(
+                                  children: [
+                                    Container(
+                                      width: 180,
+                                      height: 180,
+                                      clipBehavior: Clip.hardEdge,
+                                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+                                      child:
+                                          imageUrl != null
+                                              ? OverflowBox(
+                                                maxWidth: 290,
+                                                maxHeight: 290,
+                                                child: Center(
+                                                  child: Image.network(
+                                                    imageUrl,
+                                                    fit: BoxFit.cover,
+                                                    width: 225,
+                                                    height: 225,
+                                                    errorBuilder: (c, e, s) => const Icon(Icons.image_not_supported, size: 60),
+                                                  ),
+                                                ),
+                                              )
+                                              : const Icon(Icons.image_not_supported, size: 60),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // Add below the molecule image
+                                    FutureBuilder<String>(
+                                      future: getPublicationCount(cid ?? ''),
+                                      builder: (context, snapshot) {
+                                        return Text('PubMed Citations: ${snapshot.data ?? "Loading..."}', style: TextStyle(fontSize: 13, color: Colors.blueGrey[700]));
+                                      },
+                                    ),
+                                    ElevatedButton.icon(
+                                      //icon: const Icon(Icons.open_in_new, size: 18),
+                                      label: const Text('Scholar it!'),
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        textStyle: const TextStyle(fontSize: 13),
+                                        minimumSize: const Size(0, 32),
+                                      ),
+                                      onPressed: () {
+                                        final moleculeName = Uri.encodeComponent(compound['name'] ?? '');
+                                        final userDesc = Uri.encodeComponent(_searchController.text);
+                                        final scholarUrl = 'https://scholar.google.com/scholar?q="$moleculeName"+$userDesc';
+                                        // ignore: deprecated_member_use
+                                        launchUrl(Uri.parse(scholarUrl));
+                                      },
+                                    ),
+                                  ],
                                 ),
-
                                 const SizedBox(width: 16),
-
                                 // Right side: Compound details
                                 Expanded(
                                   child: Column(

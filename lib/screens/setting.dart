@@ -63,7 +63,7 @@ class _SettingsPageState extends State<SettingPage> {
             TextField(
               decoration: InputDecoration(labelText: 'Gemini API Key', border: OutlineInputBorder()),
               controller: TextEditingController(text: _settings.geminiApiKey),
-              onChanged: (value) => _updateSettings(geminiApiKey: value),
+              //onChanged: (value) => _updateSettings(geminiApiKey: value),
             ),
             SizedBox(height: 20),
             Text("the used key is ${_settings.geminiApiKey == '' ? gmnkey : _settings.geminiApiKey}", textAlign: TextAlign.center),
