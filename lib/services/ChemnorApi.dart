@@ -5,7 +5,9 @@ import 'package:hive/hive.dart';
 
 class ChemnorApi {
   String apikey = gmnkey;
-  late final ChemNOR chemnor = ChemNOR(genAiApiKey: apikey);
+  GeminiModel Model = GeminiModel.gemini2_5Pro;
+
+  late final ChemNOR chemnor = ChemNOR(genAiApiKey: apikey, model: Model);
 
   void initiate(String api) {
     apikey = api;
@@ -26,7 +28,7 @@ class ChemnorApi {
 
   // Use chemnor for model-like functionality
   ChemNOR model(String apikey) {
-    return ChemNOR(genAiApiKey: apikey);
+    return ChemNOR(genAiApiKey: apikey, model: Model);
   }
 
   Future<void> initHive() async {
@@ -46,7 +48,7 @@ class ChemnorApi {
 
   Future<String> fetchResponse(String inputText) async {
     // Use chemnor's chat method instead of Gemini
-    final value = await chemnor.chat(inputText);
+    final value = await chemnor.chat(inputText, '');
     return value ?? 'No response';
   }
 
