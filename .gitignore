@@ -5,7 +5,16 @@
 *.swp
 .DS_Store
 .atom/
-.build/
+.build/app/generated/
+.build/app/intermediate/
+.build/app/kotlin/
+.build/app/kotlinToolingMetadata/
+.build/app/tmp/
+.build/flutter_assets/
+.build/native_assets/
+.build/reports/
+.build/web/
+.build/windows/
 .buildlog/
 .history
 .svn/
@@ -32,7 +41,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
-!/build/app/outputs/flutter-apk/
+!build/app/outputs/flutter-apk/
 /lib/keys.dart
 
 # Symbolication related
