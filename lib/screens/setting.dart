@@ -76,7 +76,7 @@ class _SettingsPageState extends State<SettingPage> {
           children: <Widget>[
             const SizedBox(height: 10),
             const SizedBox(height: 10),
-            Text("TThis app is developed by", style: TextStyle(fontSize: _settings.fontSize, color: Colors.grey.shade500), textAlign: TextAlign.center),
+            Text("This App is Developed by", style: TextStyle(fontSize: _settings.fontSize, color: Colors.grey.shade500), textAlign: TextAlign.center),
             ClipOval(child: Image.asset('images/1.png', width: 200, height: 200)),
 
             //clipBehavior: Clip.hardEdge,clipper: ,
