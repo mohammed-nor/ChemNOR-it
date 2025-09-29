@@ -90,7 +90,7 @@ class _SettingsPageState extends State<SettingPage> {
                 // Define the URL explicitly (it seems 'githubUrl' might be undefined)
                 const String githubUrl = "https://github.com/mohammed-nor";
 
-                try {
+                /*try {
                   Uri url = Uri.parse(githubUrl);
                   // Use external application to open URLs on mobile
                   if (await canLaunchUrl(url)) {
@@ -103,7 +103,8 @@ class _SettingsPageState extends State<SettingPage> {
                   }
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-                }
+                }*/
+                launchUrl(Uri.parse(githubUrl));
               },
               icon: const Icon(Icons.link),
               label: const Text("GitHub"),
@@ -152,9 +153,9 @@ class _SettingsPageState extends State<SettingPage> {
             ElevatedButton.icon(
               onPressed: () async {
                 // Define the URL explicitly (it seems 'githubUrl' might be undefined)
-                const String githubUrl = "https://aistudio.google.com/app/api-keys";
+                const String Url = "https://aistudio.google.com/app/api-keys";
 
-                try {
+                /*try {
                   Uri url = Uri.parse(githubUrl);
                   // Use external application to open URLs on mobile
                   if (await canLaunchUrl(url)) {
@@ -167,7 +168,8 @@ class _SettingsPageState extends State<SettingPage> {
                   }
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-                }
+                }*/
+                launchUrl(Uri.parse(Url));
               },
               icon: const Icon(Icons.link),
               label: const Text("Get your API key"),
