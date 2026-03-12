@@ -19,16 +19,17 @@ import 'package:http/http.dart' as http;
 void main() => runApp(RetroSynthApp());
 
 class RetroSynthApp extends StatelessWidget {
+  const RetroSynthApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Retrosynthesis Demo',
-      home: RetroHomePage(),
-    );
+    return MaterialApp(title: 'Retrosynthesis Demo', home: RetroHomePage());
   }
 }
 
 class RetroHomePage extends StatefulWidget {
+  const RetroHomePage({super.key});
+
   @override
   _RetroHomePageState createState() => _RetroHomePageState();
 }
@@ -40,7 +41,9 @@ class _RetroHomePageState extends State<RetroHomePage> {
   String? _error;
 
   Future<String> getSmilesFromName(String name) async {
-    final url = Uri.parse('https://cactus.nci.nih.gov/chemical/structure/$name/smiles');
+    final url = Uri.parse(
+      'https://cactus.nci.nih.gov/chemical/structure/$name/smiles',
+    );
     final response = await http.get(url);
     if (response.statusCode == 200) {
       return response.body.trim();
@@ -50,13 +53,17 @@ class _RetroHomePageState extends State<RetroHomePage> {
   }
 
   Future<String> getChemicalName(String smiles) async {
-    final url = Uri.parse('https://cactus.nci.nih.gov/chemical/structure/$smiles/iupac_name');
+    final url = Uri.parse(
+      'https://cactus.nci.nih.gov/chemical/structure/$smiles/iupac_name',
+    );
     final response = await http.get(url);
     return response.statusCode == 200 ? response.body.trim() : smiles;
   }
 
   Future<List<String>> getRetrosynthesis(String smiles) async {
-    final url = Uri.parse('https://rxn.res.ibm.com/rxn/api/api/v1/retrosynthesis');
+    final url = Uri.parse(
+      'https://rxn.res.ibm.com/rxn/api/api/v1/retrosynthesis',
+    );
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -145,7 +152,7 @@ class _RetroHomePageState extends State<RetroHomePage> {
                         ),
                       ),
                     ),
-                  )
+                  ),
           ],
         ),
       ),

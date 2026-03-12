@@ -40,7 +40,11 @@ class _JsonFetchScreenState extends State<JsonFetchScreen> {
       try {
         // Replace with your actual API endpoint
         //final response = await http.get(Uri.parse('https://jsonplaceholder.typicode.com/posts?title=$query'));
-        final response = await http.get(Uri.parse('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$query/JSON'));
+        final response = await http.get(
+          Uri.parse(
+            'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$query/JSON',
+          ),
+        );
 
         if (response.statusCode == 200) {
           setState(() {
@@ -54,9 +58,9 @@ class _JsonFetchScreenState extends State<JsonFetchScreen> {
           throw Exception('Failed to load data');
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
         setState(() => _isLoading = false);
       }
     }
@@ -108,22 +112,27 @@ class _JsonFetchScreenState extends State<JsonFetchScreen> {
                                     displayValue = value['sval'] ?? "N/A";
                                     break;
                                   case 5: // Integer
-                                    displayValue = value['ival']?.toString() ?? "N/A";
+                                    displayValue =
+                                        value['ival']?.toString() ?? "N/A";
                                     break;
                                   case 7: // Float
-                                    displayValue = value['fval']?.toString() ?? "N/A";
+                                    displayValue =
+                                        value['fval']?.toString() ?? "N/A";
                                     break;
                                   case 16: // Binary (Fingerprint)
                                     //displayValue = "Fingerprint data (not displayed)";
-                                    displayValue = value['binary']?.toString() ?? "N/A";
-                                    ;
+                                    displayValue =
+                                        value['binary']?.toString() ?? "N/A";
+                                    {}
                                     break;
                                   default:
                                     displayValue = "Unknown data type";
                                 }
 
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 4.0,
+                                  ),
                                   child: Text(
                                     "$label ${name != null ? "$name" : ""}: $displayValue",
                                     style: const TextStyle(fontSize: 16.0),

@@ -1,18 +1,18 @@
-import 'package:chemnor__it/key.dart';
+import 'package:chemnor_it/key.dart';
 import 'package:flutter/material.dart';
 import 'package:chem_nor/chem_nor.dart'; // Use chem_nor package
 import 'package:hive/hive.dart';
 
 class ChemnorApi {
-  String apikey = gmnkey;
+  String apikey = Hive.box('settingBox').get('geminiapikey', defaultValue: '');
   GeminiModel Model = GeminiModel.gemini2_5Pro;
 
-  late final ChemNOR chemnor = ChemNOR(genAiApiKey: apikey, model: Model);
+  late ChemNOR chemnor = ChemNOR(genAiApiKey: apikey, model: Model);
 
   void initiate(String api) {
     apikey = api;
-    // Re-initialize chemnor with new API key if needed
-    // chemnor = ChemNOR(genAiApiKey: apikey);
+    //Re-initialize chemnor with new API key if needed
+    chemnor = ChemNOR(genAiApiKey: apikey);
   }
 
   void startchat(api) {}
@@ -61,7 +61,11 @@ class ChemnorApi {
 
   void scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 750), curve: Curves.easeOutCirc),
+      (_) => _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 750),
+        curve: Curves.easeOutCirc,
+      ),
     );
   }
 

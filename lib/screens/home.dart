@@ -9,11 +9,12 @@
 /// - [ChatPage]: General chat interface for AI interaction
 /// - [HistoryWidget]: View saved responses and search history
 /// - [SettingPage]: Application settings management
+library;
 
 // Import necessary screen widgets
-import 'package:chemnor__it/screens/history.dart'; // History screen
-import 'package:chemnor__it/screens/search.dart'; // Search screen
-import 'package:chemnor__it/screens/setting.dart'; // Settings screen
+import 'package:chemnor_it/screens/history.dart'; // History screen
+import 'package:chemnor_it/screens/search.dart'; // Search screen
+import 'package:chemnor_it/screens/setting.dart'; // Settings screen
 import 'package:flutter/material.dart'; // Flutter UI components
 import 'chat.dart'; // Chat screen
 
@@ -71,17 +72,33 @@ class _MyHomePageState extends State<MyHomePage> {
 
         // Navigation bar styling and behavior
         type: BottomNavigationBarType.fixed, // Show all tabs equally
-        selectedItemColor: const Color.fromARGB(255, 255, 245, 210), // Cream color for selected tab
-        unselectedItemColor: Colors.white70, // Slightly translucent white for unselected tabs
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold), // Bold text for selected tab
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal), // Normal text for unselected tabs
+        selectedItemColor: const Color.fromARGB(
+          255,
+          255,
+          245,
+          210,
+        ), // Cream color for selected tab
+        unselectedItemColor:
+            Colors.white70, // Slightly translucent white for unselected tabs
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+        ), // Bold text for selected tab
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.normal,
+        ), // Normal text for unselected tabs
         showUnselectedLabels: true, // Always show all tab labels
         elevation: 12, // Shadow depth for navigation bar
         // Navigation items - icons and labels for each screen
         items: [
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_rounded), label: 'Chat'),
-          BottomNavigationBarItem(icon: Icon(Icons.history_edu_rounded), label: 'History'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_rounded),
+            label: 'Chat',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history_edu_rounded),
+            label: 'History',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Setting'),
         ],
       ),

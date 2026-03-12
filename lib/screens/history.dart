@@ -8,15 +8,16 @@
 /// If there are no saved messages, a placeholder text is shown.
 ///
 /// The widget listens to changes in the Hive box and updates the UI accordingly.
+library;
 
 // Import necessary packages
-import 'package:chemnor__it/main.dart'; // For app-wide configurations
+import 'package:chemnor_it/main.dart'; // For app-wide configurations
 import 'package:flutter/material.dart'; // Flutter UI components
 import 'package:flutter/services.dart'; // For clipboard access
-import 'package:hive/hive.dart'; // For local storage
+// For local storage
 import 'package:gpt_markdown/gpt_markdown.dart'; // For markdown rendering
 import 'package:hive_flutter/adapters.dart'; // For Hive UI integration
-import '../screens/settings_controller.dart'; // For app settings
+// For app settings
 
 /// Main widget for displaying saved chat history
 class HistoryWidget extends StatefulWidget {
@@ -79,18 +80,26 @@ class _HistoryWidgetState extends State<HistoryWidget> {
                   children: [
                     // Main content with padding for delete button
                     Padding(
-                      padding: const EdgeInsets.only(top: 8.0, right: 40.0, left: 8.0, bottom: 8.0),
+                      padding: const EdgeInsets.only(
+                        top: 8.0,
+                        right: 40.0,
+                        left: 8.0,
+                        bottom: 8.0,
+                      ),
                       child: ListTile(
                         // Display message content as markdown
                         title: GptMarkdown(value ?? ''),
                         // Copy to clipboard on long press
-                        onLongPress:
-                            value != null
-                                ? () {
-                                  Clipboard.setData(ClipboardData(text: value));
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied to clipboard!')));
-                                }
-                                : null,
+                        onLongPress: value != null
+                            ? () {
+                                Clipboard.setData(ClipboardData(text: value));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Copied to clipboard!'),
+                                  ),
+                                );
+                              }
+                            : null,
                       ),
                     ),
 

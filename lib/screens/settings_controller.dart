@@ -3,6 +3,7 @@
 /// Manages application settings using Hive storage and ValueNotifier pattern.
 /// Provides both a data model (AppSettings) and a controller (SettingsController)
 /// to manage and access settings throughout the app.
+library;
 
 import 'package:chem_nor/chem_nor.dart'; // Import for GeminiModel enum
 import 'package:flutter/material.dart'; // For ValueNotifier and other Flutter components
@@ -17,7 +18,8 @@ class AppSettings {
 
   /// Default constructor with default values for all settings
   AppSettings({
-    this.selectedModel = GeminiModel.gemini1_5Flash, // Default to Gemini 1.5 Flash model
+    this.selectedModel =
+        GeminiModel.gemini2_5Pro, // Default to Gemini 2.5 Pro model
     this.fontSize = 16.0, // Default font size
     this.diversity = 0.5, // Default diversity
     this.geminiApiKey = '', // Empty API key by default
@@ -34,20 +36,7 @@ class AppSettings {
   /// Helper method to convert string representation to GeminiModel enum
   /// This is needed because Hive can store strings but not enum values directly
   static GeminiModel _stringToGeminiModel(String? modelString) {
-    switch (modelString) {
-      case 'gemini1_5flash':
-        return GeminiModel.gemini1_5Flash;
-      case 'gemini2_0flash':
-        return GeminiModel.gemini2_0Flash;
-      case 'gemini2_0flashlite':
-        return GeminiModel.gemini2_0FlashLite;
-      case 'gemini2_5pro':
-        return GeminiModel.gemini2_5Pro;
-      case 'gemini2_5flash':
-        return GeminiModel.gemini2_5Flash;
-      default:
-        return GeminiModel.gemini1_5Flash; // Default if string doesn't match
-    }
+    return GeminiModel.gemini2_5Pro; // Use default model
   }
 
   /// Helper method to convert GeminiModel enum to string for storage
@@ -83,7 +72,12 @@ class SettingsController extends ValueNotifier<AppSettings> {
 
   /// Update specific settings fields, keeping others unchanged
   /// This provides a convenient way to change just one setting
-  void updateField({GeminiModel? selectedModel, double? fontSize, num? diversity, String? geminiApiKey}) {
+  void updateField({
+    GeminiModel? selectedModel,
+    double? fontSize,
+    num? diversity,
+    String? geminiApiKey,
+  }) {
     // Create new settings object with updated fields
     value = AppSettings(
       selectedModel: selectedModel ?? value.selectedModel,

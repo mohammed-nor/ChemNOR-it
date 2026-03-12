@@ -10,9 +10,10 @@
 ///
 /// The app uses Material 3 design, a custom color scheme, and disables the
 /// debug banner. The home screen is set to [MyHomePage].
+library;
 
-import 'package:chemnor__it/screens/home.dart'; // Main home page with navigation
-import 'package:chemnor__it/screens/settings_controller.dart'; // App settings management
+import 'package:chemnor_it/screens/home.dart'; // Main home page with navigation
+import 'package:chemnor_it/screens/settings_controller.dart'; // App settings management
 import 'package:flutter/material.dart'; // Core Flutter framework
 import 'package:hive_flutter/adapters.dart'; // Persistent storage with Hive
 import 'package:path_provider/path_provider.dart'; // Access to app directory for storage
@@ -77,7 +78,10 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
 
             // Color scheme based on purple hue with dark mode
-            colorScheme: ColorScheme.fromSeed(brightness: Brightness.dark, seedColor: const Color.fromARGB(255, 200, 171, 244)),
+            colorScheme: ColorScheme.fromSeed(
+              brightness: Brightness.dark,
+              seedColor: const Color.fromARGB(255, 200, 171, 244),
+            ),
 
             // Apply font size scaling from settings to all text
             textTheme: Theme.of(context).textTheme.apply(

@@ -6,14 +6,15 @@
 ///
 /// Both interfaces share similar UI and functionality but differ in their initialization
 /// and context management.
+library;
 
 // Import necessary packages
 import 'package:flutter/material.dart'; // Flutter UI components
-import 'package:flutter/services.dart'; // For clipboard functionality
+// For clipboard functionality
 import 'package:gpt_markdown/gpt_markdown.dart'; // For markdown rendering
 import 'package:hive/hive.dart'; // Local storage
 import '../services/ChemnorApi.dart'; // API service for AI interaction
-import '../screens/settings_controller.dart'; // App settings
+// App settings
 
 /// Compound-specific chat widget that can be initialized with compound data
 class ChatWidget extends StatefulWidget {
@@ -21,7 +22,7 @@ class ChatWidget extends StatefulWidget {
   final Map<String, dynamic>? compoundData;
 
   // Constructor with optional compound data
-  const ChatWidget({Key? key, this.compoundData}) : super(key: key);
+  const ChatWidget({super.key, this.compoundData});
 
   @override
   // Create state for this widget
@@ -40,7 +41,8 @@ class _ChatWidgetState extends State<ChatWidget> {
   final FocusNode _textFieldFocus = FocusNode();
 
   // List to store chat messages (using records for type safety)
-  final List<({Image? image, String? text, bool fromUser})> _generatedContent = <({Image? image, String? text, bool fromUser})>[];
+  final List<({Image? image, String? text, bool fromUser})> _generatedContent =
+      <({Image? image, String? text, bool fromUser})>[];
 
   // Flag to track if a request is in progress
   bool _loading = false;
@@ -56,7 +58,9 @@ class _ChatWidgetState extends State<ChatWidget> {
     // If compound data is provided, send an initial message about it
     if (widget.compoundData != null) {
       // Format compound data as a string
-      final compoundInfo = widget.compoundData!.entries.map((e) => '${e.key}: ${e.value}').join('\n');
+      final compoundInfo = widget.compoundData!.entries
+          .map((e) => '${e.key}: ${e.value}')
+          .join('\n');
 
       // Create initial prompt with compound context
       final initialPrompt =
@@ -73,7 +77,10 @@ class _ChatWidgetState extends State<ChatWidget> {
   String processAIText(String? text) {
     if (text == null) return '';
     // Only replace "you are" (case-insensitive) with "i am"
-    return text.replaceAllMapped(RegExp(r'you are', caseSensitive: false), (match) => 'i am');
+    return text.replaceAllMapped(
+      RegExp(r'you are', caseSensitive: false),
+      (match) => 'i am',
+    );
   }
 
   /// Send initial message with compound information to the AI
@@ -87,7 +94,9 @@ class _ChatWidgetState extends State<ChatWidget> {
       // Add compound context if available
       if (widget.compoundData != null) {
         // Format compound data
-        contextText = widget.compoundData!.entries.map((e) => '${e.key}: ${e.value}').join('\n');
+        contextText = widget.compoundData!.entries
+            .map((e) => '${e.key}: ${e.value}')
+            .join('\n');
         // Create full prompt with context
         contextText = "Compound context:\n$contextText\n\n$message";
       } else {
@@ -128,12 +137,24 @@ class _ChatWidgetState extends State<ChatWidget> {
     final textFieldDecoration = InputDecoration(
       contentPadding: const EdgeInsets.all(15),
       hintText: 'Enter a prompt...',
-      border: OutlineInputBorder(borderRadius: const BorderRadius.all(Radius.circular(14)), borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary)),
-      focusedBorder: OutlineInputBorder(borderRadius: const BorderRadius.all(Radius.circular(14)), borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary)),
+      border: OutlineInputBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(14)),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(14)),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary),
+      ),
     );
     return SafeArea(
       child: Scaffold(
-        appBar: AppBar(title: Text(widget.compoundData?['name'] != null ? 'Chat: ${widget.compoundData!['name']}' : 'Chat')),
+        appBar: AppBar(
+          title: Text(
+            widget.compoundData?['name'] != null
+                ? 'Chat: ${widget.compoundData!['name']}'
+                : 'Chat',
+          ),
+        ),
         body: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -145,34 +166,60 @@ class _ChatWidgetState extends State<ChatWidget> {
                   controller: _scrollController,
                   itemBuilder: (context, idx) {
                     final content = _generatedContent[idx];
-                    return MessageWidget(text: content.text, image: content.image, isFromUser: content.fromUser);
+                    return MessageWidget(
+                      text: content.text,
+                      image: content.image,
+                      isFromUser: content.fromUser,
+                    );
                   },
                   itemCount: _generatedContent.length,
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 15),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 25,
+                  horizontal: 15,
+                ),
                 child: Row(
                   children: [
-                    Expanded(child: TextField(autofocus: true, focusNode: _textFieldFocus, decoration: textFieldDecoration, controller: _textController, onSubmitted: _sendChatMessage)),
+                    Expanded(
+                      child: TextField(
+                        autofocus: true,
+                        focusNode: _textFieldFocus,
+                        decoration: textFieldDecoration,
+                        controller: _textController,
+                        onSubmitted: _sendChatMessage,
+                      ),
+                    ),
                     const SizedBox.square(dimension: 15),
                     IconButton(
-                      onPressed:
-                          !_loading
-                              ? () async {
-                                // Chemistry-related action: call chemist method from ChemnorApi
-                                if (widget.compoundData != null && widget.compoundData!['cid'] != null) {
-                                  final cid = widget.compoundData!['cid'].toString();
-                                  final result = await ApiSrv.chemist(cid);
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Chemist result: $result')));
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No compound selected.')));
-                                }
+                      onPressed: !_loading
+                          ? () async {
+                              // Chemistry-related action: call chemist method from ChemnorApi
+                              if (widget.compoundData != null &&
+                                  widget.compoundData!['cid'] != null) {
+                                final cid = widget.compoundData!['cid']
+                                    .toString();
+                                final result = await ApiSrv.chemist(cid);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Chemist result: $result'),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('No compound selected.'),
+                                  ),
+                                );
                               }
-                              : null,
+                            }
+                          : null,
                       icon: Icon(
                         Icons.science, // Chemistry-related icon
-                        color: _loading ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.primary,
+                        color: _loading
+                            ? Theme.of(context).colorScheme.secondary
+                            : Theme.of(context).colorScheme.primary,
                       ),
                     ),
                     if (!_loading)
@@ -180,7 +227,10 @@ class _ChatWidgetState extends State<ChatWidget> {
                         onPressed: () async {
                           _sendChatMessage(_textController.text);
                         },
-                        icon: Icon(Icons.send, color: Theme.of(context).colorScheme.primary),
+                        icon: Icon(
+                          Icons.send,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       )
                     else
                       const CircularProgressIndicator(),
@@ -211,29 +261,41 @@ class _ChatWidgetState extends State<ChatWidget> {
       // Add compound context if available
       if (widget.compoundData != null) {
         // Format compound data
-        String compoundContext = widget.compoundData!.entries.map((e) => '${e.key}: ${e.value}').join('\n');
+        String compoundContext = widget.compoundData!.entries
+            .map((e) => '${e.key}: ${e.value}')
+            .join('\n');
         prompt = "Compound context:\n$compoundContext\n\n";
       }
 
       // Add previous chat history for context
       if (_generatedContent.isNotEmpty) {
         prompt += "Previous conversation:\n";
-        for (final msg in _generatedContent.sublist(0, _generatedContent.length - 1)) {
+        for (final msg in _generatedContent.sublist(
+          0,
+          _generatedContent.length - 1,
+        )) {
           if (msg.text != null) {
-            prompt += msg.fromUser ? "User: ${msg.text}\n" : "Assistant: ${msg.text}\n";
+            prompt += msg.fromUser
+                ? "User: ${msg.text}\n"
+                : "Assistant: ${msg.text}\n";
           }
         }
       }
 
       // Add current question
-      prompt += "Answer the following question about the compound above:\n$message";
+      prompt +=
+          "Answer the following question about the compound above:\n$message";
 
       // Get response from API
       final response = await ApiSrv.fetchResponse(prompt);
 
       // Process and add response to chat
       final processedResponse = processAIText(response);
-      _generatedContent.add((image: null, text: processedResponse, fromUser: false));
+      _generatedContent.add((
+        image: null,
+        text: processedResponse,
+        fromUser: false,
+      ));
 
       // Update UI state
       setState(() {
@@ -242,7 +304,11 @@ class _ChatWidgetState extends State<ChatWidget> {
 
       // Scroll to bottom after a short delay
       await Future.delayed(const Duration(milliseconds: 100));
-      _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     } catch (e) {
       // Handle errors
       ApiSrv.showError(context, e.toString());
@@ -265,7 +331,12 @@ class MessageWidget extends StatelessWidget {
   final bool isFromUser; // Whether message is from user or AI
 
   // Constructor
-  const MessageWidget({super.key, this.image, this.text, required this.isFromUser});
+  const MessageWidget({
+    super.key,
+    this.image,
+    this.text,
+    required this.isFromUser,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -275,7 +346,9 @@ class MessageWidget extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       // Align user messages to right, AI messages to left
-      mainAxisAlignment: isFromUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+      mainAxisAlignment: isFromUser
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
       children: [
         // Show image if available
         if (image != null) image!,
@@ -287,7 +360,9 @@ class MessageWidget extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               // User messages have background color, AI messages are transparent
-              color: isFromUser ? const Color.fromARGB(255, 40, 0, 114) : Colors.transparent,
+              color: isFromUser
+                  ? const Color.fromARGB(255, 40, 0, 114)
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -299,13 +374,19 @@ class MessageWidget extends StatelessWidget {
                 // Add save button for AI messages
                 if (isAI && text != null)
                   IconButton(
-                    icon: const Icon(Icons.bookmark_add, color: Colors.amber, size: 22),
+                    icon: const Icon(
+                      Icons.bookmark_add,
+                      color: Colors.amber,
+                      size: 22,
+                    ),
                     tooltip: 'Save to history',
                     // Save message to history box on press
                     onPressed: () async {
                       final box = Hive.box<String>('historyBox');
                       await box.add(text!);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved to history!')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Saved to history!')),
+                      );
                     },
                   ),
               ],
@@ -319,7 +400,7 @@ class MessageWidget extends StatelessWidget {
 
 /// General chat widget for conversations without compound context
 class ChatPage extends StatefulWidget {
-  const ChatPage({Key? key}) : super(key: key);
+  const ChatPage({super.key});
 
   @override
   _ChatPageState createState() => _ChatPageState();
@@ -337,7 +418,8 @@ class _ChatPageState extends State<ChatPage> {
   final FocusNode _textFieldFocus = FocusNode();
 
   // List to store chat messages
-  final List<({Image? image, String? text, bool fromUser})> _chatMessages = <({Image? image, String? text, bool fromUser})>[];
+  final List<({Image? image, String? text, bool fromUser})> _chatMessages =
+      <({Image? image, String? text, bool fromUser})>[];
 
   // Flag to track if a request is in progress
   bool _loading = false;
@@ -358,7 +440,8 @@ class _ChatPageState extends State<ChatPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Get the latest API key from Hive
-    final currentKey = (Hive.box('settingBox').get('geminiapikey') as String?) ?? '';
+    final currentKey =
+        (Hive.box('settingBox').get('geminiapikey') as String?) ?? '';
     // Update API service if key has changed
     if (apiService.apikey != currentKey) {
       apiService.apikey = currentKey;
@@ -418,7 +501,9 @@ class _ChatPageState extends State<ChatPage> {
         for (int i = 0; i < _chatMessages.length - 1; i++) {
           final msg = _chatMessages[i];
           if (msg.text != null) {
-            prompt += msg.fromUser ? "User: ${msg.text}\n" : "AI: ${msg.text}\n";
+            prompt += msg.fromUser
+                ? "User: ${msg.text}\n"
+                : "AI: ${msg.text}\n";
           }
         }
         prompt += "\n";
@@ -437,7 +522,11 @@ class _ChatPageState extends State<ChatPage> {
 
       // Scroll to bottom after a short delay
       await Future.delayed(const Duration(milliseconds: 100));
-      _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     } catch (e) {
       apiService.showError(context, e.toString());
       setState(() {
@@ -451,39 +540,58 @@ class _ChatPageState extends State<ChatPage> {
     final TextEditingController cidController = TextEditingController();
     final String? cid = await showDialog<String>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Chemical Application'),
-            content: TextField(
-              decoration: const InputDecoration(hintText: 'Enter the chemical application you desired'),
-              controller: cidController,
-              //keyboardType: TextInputType.number,
-              onSubmitted: (value) => Navigator.of(context).pop(value),
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-              TextButton(onPressed: () => Navigator.of(context).pop(cidController.text), child: const Text('Submit')),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('Chemical Application'),
+        content: TextField(
+          decoration: const InputDecoration(
+            hintText: 'Enter the chemical application you desired',
           ),
+          controller: cidController,
+          //keyboardType: TextInputType.number,
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(cidController.text),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
     );
 
     if (cid != null && cid.isNotEmpty) {
       setState(() {
         _loading = true;
-        _chatMessages.add((image: null, text: "Brainstorming on: $cid...", fromUser: false));
+        _chatMessages.add((
+          image: null,
+          text: "Brainstorming on: $cid...",
+          fromUser: false,
+        ));
       });
 
       try {
         final result = await apiService.chemist(cid);
 
         setState(() {
-          _chatMessages.add((image: null, text: "Chemical analysis result:\n$result", fromUser: false));
+          _chatMessages.add((
+            image: null,
+            text: "Chemical analysis result:\n$result",
+            fromUser: false,
+          ));
           _loading = false;
         });
 
         // Scroll to bottom
         await Future.delayed(const Duration(milliseconds: 100));
-        _scrollController.animateTo(_scrollController.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
       } catch (e) {
         apiService.showError(context, e.toString());
         setState(() {
@@ -498,8 +606,14 @@ class _ChatPageState extends State<ChatPage> {
     final textFieldDecoration = InputDecoration(
       contentPadding: const EdgeInsets.all(15),
       hintText: 'Type a message...',
-      border: OutlineInputBorder(borderRadius: const BorderRadius.all(Radius.circular(14)), borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary)),
-      focusedBorder: OutlineInputBorder(borderRadius: const BorderRadius.all(Radius.circular(14)), borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary)),
+      border: OutlineInputBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(14)),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(14)),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary),
+      ),
     );
 
     return SafeArea(
@@ -515,8 +629,22 @@ class _ChatPageState extends State<ChatPage> {
                     textAlign: TextAlign.center,
                     text: TextSpan(
                       children: <TextSpan>[
-                        TextSpan(text: 'ChemNOR ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 22)),
-                        TextSpan(text: 'it!', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.redAccent, fontSize: 18)),
+                        TextSpan(
+                          text: 'ChemNOR ',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 22,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'it!',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.redAccent,
+                            fontSize: 18,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -525,20 +653,118 @@ class _ChatPageState extends State<ChatPage> {
                     text: TextSpan(
                       style: TextStyle(),
                       children: <TextSpan>[
-                        TextSpan(text: 'C', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 10)),
-                        TextSpan(text: 'hemical ', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey, fontSize: 10)),
-                        TextSpan(text: 'H', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 10)),
-                        TextSpan(text: 'euristic ', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey, fontSize: 10)),
-                        TextSpan(text: 'E', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 10)),
-                        TextSpan(text: 'valuation of ', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey, fontSize: 10)),
-                        TextSpan(text: 'M', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 10)),
-                        TextSpan(text: 'olecules ', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey, fontSize: 10)),
-                        TextSpan(text: 'N', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 10)),
-                        TextSpan(text: 'etworking for ', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey, fontSize: 10)),
-                        TextSpan(text: 'O', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 10)),
-                        TextSpan(text: 'ptimized ', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey, fontSize: 10)),
-                        TextSpan(text: 'R', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 10)),
-                        TextSpan(text: 'eactivity', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey, fontSize: 10)),
+                        TextSpan(
+                          text: 'C',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'hemical ',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'H',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'euristic ',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'E',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'valuation of ',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'M',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'olecules ',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'N',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'etworking for ',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'O',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'ptimized ',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'R',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'eactivity',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -573,26 +799,58 @@ class _ChatPageState extends State<ChatPage> {
                   controller: _scrollController,
                   itemBuilder: (context, idx) {
                     final message = _chatMessages[idx];
-                    return MessageBubble(text: message.text, image: message.image, isFromUser: message.fromUser);
+                    return MessageBubble(
+                      text: message.text,
+                      image: message.image,
+                      isFromUser: message.fromUser,
+                    );
                     //return MessageWidget(text: message.text, image: message.image, isFromUser: message.fromUser);
                   },
                   itemCount: _chatMessages.length,
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 8,
+                ),
                 child: Row(
                   children: [
-                    Expanded(child: TextField(autofocus: true, focusNode: _textFieldFocus, decoration: textFieldDecoration, controller: _textController, onSubmitted: _sendMessage, maxLines: null)),
+                    Expanded(
+                      child: TextField(
+                        autofocus: true,
+                        focusNode: _textFieldFocus,
+                        decoration: textFieldDecoration,
+                        controller: _textController,
+                        onSubmitted: _sendMessage,
+                        maxLines: null,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     IconButton(
                       onPressed: _loading ? null : () => _useChemistFunction(),
-                      icon: Icon(Icons.science, color: _loading ? Theme.of(context).colorScheme.secondary.withOpacity(0.5) : Theme.of(context).colorScheme.secondary),
+                      icon: Icon(
+                        Icons.science,
+                        color: _loading
+                            ? Theme.of(
+                                context,
+                              ).colorScheme.secondary.withOpacity(0.5)
+                            : Theme.of(context).colorScheme.secondary,
+                      ),
                       tooltip: 'Use Chemist Function',
                     ),
                     IconButton(
-                      onPressed: _loading ? null : () => _sendMessage(_textController.text),
-                      icon: Icon(Icons.send, color: _loading ? Theme.of(context).colorScheme.primary.withOpacity(0.5) : Theme.of(context).colorScheme.primary),
+                      onPressed: _loading
+                          ? null
+                          : () => _sendMessage(_textController.text),
+                      icon: Icon(
+                        Icons.send,
+                        color: _loading
+                            ? Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.5)
+                            : Theme.of(context).colorScheme.primary,
+                      ),
                     ),
                   ],
                 ),
@@ -600,7 +858,12 @@ class _ChatPageState extends State<ChatPage> {
               if (_loading)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: LinearProgressIndicator(backgroundColor: Theme.of(context).colorScheme.surface, valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary)),
+                  child: LinearProgressIndicator(
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -611,7 +874,12 @@ class _ChatPageState extends State<ChatPage> {
 }
 
 class MessageBubble extends StatelessWidget {
-  const MessageBubble({Key? key, this.image, this.text, required this.isFromUser}) : super(key: key);
+  const MessageBubble({
+    super.key,
+    this.image,
+    this.text,
+    required this.isFromUser,
+  });
 
   final Image? image;
   final String? text;
@@ -622,10 +890,17 @@ class MessageBubble extends StatelessWidget {
     return Align(
       alignment: isFromUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width,
+        ),
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
         padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(color: isFromUser ? const Color.fromARGB(255, 40, 0, 114) : Colors.transparent, borderRadius: BorderRadius.circular(6)),
+        decoration: BoxDecoration(
+          color: isFromUser
+              ? const Color.fromARGB(255, 40, 0, 114)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -634,11 +909,17 @@ class MessageBubble extends StatelessWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child: IconButton(
-                  icon: const Icon(Icons.bookmark_add, color: Colors.amber, size: 22),
+                  icon: const Icon(
+                    Icons.bookmark_add,
+                    color: Colors.amber,
+                    size: 22,
+                  ),
                   onPressed: () async {
                     final box = Hive.box<String>('historyBox');
                     await box.add(text!);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved to history!')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Saved to history!')),
+                    );
                   },
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
