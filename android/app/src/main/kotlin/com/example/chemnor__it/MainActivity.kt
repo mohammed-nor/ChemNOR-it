@@ -1,4 +1,4 @@
-package com.example.chemnor_it
+package com.norit.chemnor_it
 
 import io.flutter.embedding.android.FlutterActivity
 
