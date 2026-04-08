@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-
-
 // List of CIDs (Replace with your own)
 const List<int> cids = [2244, 236, 23925, 178];
 
@@ -26,7 +24,9 @@ class Compound {
       cid: cid,
       name: json["IUPACName"] ?? "Unknown",
       molecularFormula: json["MolecularFormula"] ?? "N/A",
-      molecularWeight: (json["MolecularWeight"] != null) ? double.tryParse(json["MolecularWeight"]) ?? 0.0 : 0.0,
+      molecularWeight: (json["MolecularWeight"] != null)
+          ? double.tryParse(json["MolecularWeight"]) ?? 0.0
+          : 0.0,
     );
   }
 }
@@ -36,7 +36,8 @@ Future<List<Compound>> fetchCompounds(List<int> cids) async {
   List<Compound> compounds = [];
 
   for (int cid in cids) {
-    final url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/property/IUPACName,MolecularFormula,MolecularWeight/JSON";
+    final url =
+        "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/property/IUPACName,MolecularFormula,MolecularWeight/JSON";
 
     try {
       final response = await http.get(Uri.parse(url));
@@ -60,7 +61,8 @@ Future<String> fetchPropertyForCompounds(int cid, String property) async {
   String compound = '';
   var data;
 
-  final url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/$property/property/JSON";
+  final url =
+      "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/$property/property/JSON";
 
   try {
     final response = await http.get(Uri.parse(url));

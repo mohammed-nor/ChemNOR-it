@@ -59,47 +59,41 @@ class _MyHomePageState extends State<MyHomePage> {
       body: pages[_bottomNavIndex],
 
       // Bottom navigation bar for switching between screens
-      bottomNavigationBar: BottomNavigationBar(
-        // Current selected tab
-        currentIndex: _bottomNavIndex,
-
+      bottomNavigationBar: NavigationBar(
+        // Navigation bar appearance
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        indicatorColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+        selectedIndex: _bottomNavIndex,
+        
         // Handle tab selection
-        onTap: (idx) {
+        onDestinationSelected: (idx) {
           setState(() {
             _bottomNavIndex = idx; // Update selected tab index
           });
         },
 
-        // Navigation bar styling and behavior
-        type: BottomNavigationBarType.fixed, // Show all tabs equally
-        selectedItemColor: const Color.fromARGB(
-          255,
-          255,
-          245,
-          210,
-        ), // Cream color for selected tab
-        unselectedItemColor:
-            Colors.white70, // Slightly translucent white for unselected tabs
-        selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.bold,
-        ), // Bold text for selected tab
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.normal,
-        ), // Normal text for unselected tabs
-        showUnselectedLabels: true, // Always show all tab labels
-        elevation: 12, // Shadow depth for navigation bar
-        // Navigation items - icons and labels for each screen
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_rounded),
+        // Navigation destinations
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.search_rounded),
+            selectedIcon: Icon(Icons.search_rounded, color: Color(0xFF6366F1)),
+            label: 'Search',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline_rounded),
+            selectedIcon: Icon(Icons.chat_bubble_rounded, color: Color(0xFF6366F1)),
             label: 'Chat',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history_edu_rounded),
+          NavigationDestination(
+            icon: Icon(Icons.history_edu_outlined),
+            selectedIcon: Icon(Icons.history_edu_rounded, color: Color(0xFF6366F1)),
             label: 'History',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Setting'),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings_rounded, color: Color(0xFF6366F1)),
+            label: 'Setting',
+          ),
         ],
       ),
     );

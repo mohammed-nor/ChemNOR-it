@@ -1,63 +1,68 @@
-import 'package:chemnor_it/key.dart';
+import 'package:chemnor_it/main.dart';
 import 'package:flutter/material.dart';
 import 'package:chem_nor/chem_nor.dart'; // Use chem_nor package
-import 'package:hive/hive.dart';
 
 class ChemnorApi {
-  String apikey = Hive.box('settingBox').get('geminiapikey', defaultValue: '');
-  GeminiModel Model = GeminiModel.gemini2_5Pro;
+  // Singleton pattern to ensure one instance throughout the app
+  static final ChemnorApi _instance = ChemnorApi._internal();
+  factory ChemnorApi() => _instance;
 
-  late ChemNOR chemnor = ChemNOR(genAiApiKey: apikey, model: Model);
+  // Internal state for the package client
+  late ChemNOR _currentClient;
 
-  void initiate(String api) {
-    apikey = api;
-    //Re-initialize chemnor with new API key if needed
-    chemnor = ChemNOR(genAiApiKey: apikey);
+  ChemnorApi._internal() {
+    // Initialize with current settings
+    _updateClient();
+
+    // Listen for setting changes and update the client instantly
+    settingsController.addListener(_updateClient);
   }
 
-  void startchat(api) {}
-
-  void startsearch(api) {}
-
-  final ScrollController _scrollController = ScrollController();
-  final TextEditingController _textController = TextEditingController();
-  final FocusNode _textFieldFocus = FocusNode();
-  late Box<String> _settingsBox;
-  late final BuildContext context;
-  late bool _loading;
-
-  // Use chemnor for model-like functionality
-  ChemNOR model(String apikey) {
-    return ChemNOR(genAiApiKey: apikey, model: Model);
+  void _updateClient() {
+    _currentClient = ChemNOR(
+      genAiApiKey: settingsController.value.geminiApiKey,
+      model: settingsController.value.selectedModel.apiName,
+    );
   }
 
-  Future<void> initHive() async {
-    _settingsBox = await Hive.openBox<String>('settings');
-    await Hive.openBox('chatMessagesBox');
+  /// Manually force a re-initialization of the AI client
+  void reinitiate() {
+    _updateClient();
   }
 
-  Future<String> getApiKey() async {
-    _settingsBox = await Hive.openBox<String>('settings');
-    return _settingsBox.get('api_key').toString();
+  /// Compatibility for legacy code that tries to set apikey directly
+  set apikey(String value) {
+    if (value != settingsController.value.geminiApiKey) {
+      settingsController.updateField(geminiApiKey: value);
+    }
   }
 
-  Future<void> setApiKey(String apiKey) async {
-    _settingsBox = await Hive.openBox<String>('settings');
-    return await _settingsBox.put('api_key', apiKey);
-  }
+  String get apikey => settingsController.value.geminiApiKey;
 
   Future<String> fetchResponse(String inputText) async {
-    // Use chemnor's chat method instead of Gemini
-    final value = await chemnor.chat(inputText, '');
-    return value ?? 'No response';
+    final result = await _currentClient.chat(inputText, '');
+    return result ?? 'No response from ChemNOR';
   }
 
-  // Example chemist method for chemistry actions
   Future<String> chemist(String cid) async {
-    // You can implement this method using chemnor's API as needed
-    final result = await chemnor.chemist(cid);
-    return result ?? 'No chemist result';
+    final result = await _currentClient.chemist(cid);
+    return result ?? 'Analysis failed';
   }
+
+  Future<String> findListOfCompoundsJSN(String description) async {
+    // Forward the search request to the package client using the correct method name
+    final result = await _currentClient.findListOfCompoundsJSN(description);
+    return result ?? '';
+  }
+
+  Future<String> findListOfCompoundsJSN_New(String description) async {
+    // Forward the search request to the package client using the correct method name
+    final result = await _currentClient.findListOfCompoundsJSN(description);
+    return result ?? '';
+  }
+
+  // Scroll controller used for auto-scrolling chat
+  final ScrollController _scrollController = ScrollController();
 
   void scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback(

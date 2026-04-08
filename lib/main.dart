@@ -74,22 +74,74 @@ class MyApp extends StatelessWidget {
 
           // Theme configuration
           theme: ThemeData(
-            // Use Material 3 design language
             useMaterial3: true,
-
-            // Color scheme based on purple hue with dark mode
+            brightness: Brightness.dark,
+            
+            // Custom color scheme for a premium scientific look
             colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF6366F1), // Indigo primary
               brightness: Brightness.dark,
-              seedColor: const Color.fromARGB(255, 200, 171, 244),
+              surface: const Color(0xFF0F172A), // Deep slate surface
+              background: const Color(0xFF020617), // Near-black background
             ),
 
-            // Apply font size scaling from settings to all text
+            // Scaffold background color
+            scaffoldBackgroundColor: const Color(0xFF020617),
+
+            // Card theme for consistent material elevations
+            cardTheme: CardThemeData(
+              color: const Color(0xFF1E293B),
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: Colors.white.withOpacity(0.05),
+                  width: 1,
+                ),
+              ),
+            ),
+
+            // Input decoration theme for glassmorphism-like fields
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: const Color(0xFF1E293B),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: Colors.white.withOpacity(0.05),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(
+                  color: Color(0xFF6366F1),
+                  width: 2,
+                ),
+              ),
+            ),
+
+            // Elevated button theme
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6366F1),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+
+            // Text theme refinements
             textTheme: Theme.of(context).textTheme.apply(
-              // Scale font size based on user preference
               fontSizeFactor: settings.fontSize / 16.0,
-              // Set text colors to white for both display and body text
               displayColor: Colors.white,
-              bodyColor: Colors.white,
+              bodyColor: const Color(0xFFE2E8F0), // Off-white for readability
             ),
           ),
 

@@ -7,18 +7,15 @@
 library;
 
 // Import necessary packages for functionality
-import 'package:chem_nor/chem_nor.dart'; // Core ChemNOR functionality
 import 'package:chemnor_it/main.dart'; // Main app configuration
 import 'dart:convert'; // For JSON processing
 import 'package:flutter/material.dart'; // Flutter UI components
 import 'package:url_launcher/url_launcher.dart'; // For launching URLs
 import 'package:http/http.dart' as http; // HTTP requests
-import 'package:hive/hive.dart'; // Local storage
 
 // Import local files
-//import '../key.dart'; // API key management
 import '../screens/chat.dart'; // For navigation to chat screen
-import '../screens/settings_controller.dart'; // App settings
+import '../services/ChemnorApi.dart'; // Add this import
 
 // Enum defining the possible states of the search process
 enum SearchProgress {
@@ -41,11 +38,11 @@ class SearchWidget extends StatefulWidget {
 }
 
 // State class for the SearchWidget
-class _SearchWidgetState extends State<SearchWidget> {
-  // Initialize ChemNOR API service with the global API key
-  String gmnkey = Hive.box('settingBox').get('geminiapikey', defaultValue: '');
-
-  late ChemNOR ApiSrv = ChemNOR(genAiApiKey: gmnkey);
+class _SearchWidgetState extends State<SearchWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  final ApiSrv = ChemnorApi();
 
   // Track the current search progress state
   SearchProgress _progress = SearchProgress.idle;
@@ -54,33 +51,29 @@ class _SearchWidgetState extends State<SearchWidget> {
   String _progressMessage = '';
 
   @override
-  // Initialize state when widget is created
-  initState() {
-    // Set loading state to false initially
-    _isLoading = false;
+  void initState() {
     super.initState();
-    gmnkey = settingsController.value.geminiApiKey;
-    _currentModel = Hive.box(
-      'settingBox',
-    ).get('selectedModel', defaultValue: 'gemini2_5flash');
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
+    _fadeController.forward();
   }
 
   @override
-  // Called when inherited widgets change or when settings are updated
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    // Get the latest key and model from Hive storage
-    gmnkey = settingsController.value.geminiApiKey;
-    _currentModel = Hive.box(
-      'settingBox',
-    ).get('selectedModel', defaultValue: 'gemini2_5flash');
-
-    // Only recreate API service if key or model has changed
-    ApiSrv = ChemNOR(
-      genAiApiKey: gmnkey,
-      model: GeminiModel.fromString(_currentModel),
-    );
+    // ChemnorApi now handles model and key updates automatically
   }
 
   // Controller for the search text field
@@ -89,20 +82,13 @@ class _SearchWidgetState extends State<SearchWidget> {
   // List to store search results
   List<Map<String, dynamic>> _compoundsResult = [];
 
-  // Flag to track loading state
-  bool _isLoading = false;
-
   // Error message to display if search fails
   String _errorMessage = '';
-
-  // Store the current selected model
-  String _currentModel = 'gemini2_5flash';
 
   // Main search function - performs the API call and processes results
   Future<void> _searchCompounds(String description) async {
     // Update UI to show loading state and reset previous results
     setState(() {
-      _isLoading = true;
       _errorMessage = '';
       _compoundsResult = [];
       _progress = SearchProgress.processingPrompt;
@@ -117,7 +103,7 @@ class _SearchWidgetState extends State<SearchWidget> {
       setState(() {
         _progress = SearchProgress.fetchingCompounds;
         _progressMessage =
-            'Fetching compound information... \n using $_currentModel model \n with the key ${settingsController.value.geminiApiKey.isEmpty ? "" : "$gmnkey"}';
+            'Fetching compound information... \n using ${settingsController.value.selectedModel.apiName} model \n with the key ${settingsController.value.geminiApiKey.isEmpty ? "" : "configured"}';
       });
 
       // Step 2: Fetch compound data from API
@@ -186,9 +172,7 @@ class _SearchWidgetState extends State<SearchWidget> {
     } finally {
       // Update loading state when done (success or error)
       if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() {});
     }
   }
 
@@ -246,418 +230,566 @@ class _SearchWidgetState extends State<SearchWidget> {
   @override
   // Build the UI for the search widget
   Widget build(BuildContext context) {
+    final baseFontSize = settingsController.value.fontSize;
     // Get user preferences from settings controller
     final fontSize = settingsController.value.fontSize;
     final apiKey = settingsController.value.geminiApiKey;
 
-    return SafeArea(
-      child: Scaffold(
-        // Main UI structure
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                // App title and logo section
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // ChemNOR logo text with styling
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        children: <TextSpan>[
-                          TextSpan(
-                            text: 'ChemNOR ',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontSize: 22,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'it!',
-                            style: TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: Colors.redAccent,
-                              fontSize: 18,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // ChemNOR acronym explanation
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: TextStyle(),
-                        children: <TextSpan>[
-                          // Each letter of ChemNOR is highlighted with its meaning
-                          TextSpan(
-                            text: 'C',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'hemical ',
-                            style: TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'H',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'euristic ',
-                            style: TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'E',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'valuation of ',
-                            style: TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'M',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'olecules ',
-                            style: TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'N',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'etworking for ',
-                            style: TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'O',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'ptimized ',
-                            style: TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'R',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'eactivity',
-                            style: TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
+    return Scaffold(
+      backgroundColor: Colors.transparent, // Background handled by the Stack
+      body: Stack(
+        children: [
+          // Premium Designed Background
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+              ),
+              child: Stack(
+                children: [
+                  // Subtle glowing orbs for depth
+                  Positioned(
+                    top: -100,
+                    right: -100,
+                    child: Container(
+                      width: 400,
+                      height: 400,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF6366F1).withOpacity(0.08),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -150,
+                    left: -150,
+                    child: Container(
+                      width: 500,
+                      height: 500,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF4F46E5).withOpacity(0.05),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
 
-                // Search text field
-                Container(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      labelText: 'Enter prompt for compounds',
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.search),
-                        onPressed: () {
-                          // Trigger search when button is clicked
-                          if (_searchController.text.isNotEmpty) {
-                            _searchCompounds(_searchController.text);
+          // Main Content
+          CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 180.0,
+                floating: false,
+                pinned: true,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                scrolledUnderElevation: 0,
+                flexibleSpace: FlexibleSpaceBar(
+                  centerTitle: true,
+                  title: RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'ChemNOR ',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: baseFontSize + 4.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'it! ',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.redAccent,
+                            fontSize: baseFontSize,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'Explore\n',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: baseFontSize,
+                            fontWeight: FontWeight.w300,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'C',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                            fontSize: baseFontSize - 7.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'hemical ',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                            fontSize: baseFontSize - 7.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'H',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                            fontSize: baseFontSize - 7.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'euristic ',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                            fontSize: baseFontSize - 7.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'E',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                            fontSize: baseFontSize - 7.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'valuation of ',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                            fontSize: baseFontSize - 7.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'M',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                            fontSize: baseFontSize - 7.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'olecules ',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                            fontSize: baseFontSize - 7.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'N',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                            fontSize: baseFontSize - 7.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'etworking for ',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                            fontSize: baseFontSize - 7.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'O',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                            fontSize: baseFontSize - 7.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'ptimized ',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                            fontSize: baseFontSize - 7.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'R',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                            fontSize: baseFontSize - 7.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'eactivity',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                            fontSize: baseFontSize - 7.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    children: [
+                      // Search text field
+                      TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Describe compound properties...',
+                          prefixIcon: Icon(Icons.search_rounded),
+                          suffixIcon: IconButton(
+                            icon: Icon(Icons.auto_awesome_rounded),
+                            onPressed: () {
+                              if (_searchController.text.isNotEmpty) {
+                                _searchCompounds(_searchController.text);
+                              }
+                            },
+                          ),
+                        ),
+                        onSubmitted: (value) {
+                          if (value.isNotEmpty) {
+                            _searchCompounds(value);
                           }
                         },
                       ),
-                    ),
-                    onSubmitted: (value) {
-                      // Also trigger search when Enter key is pressed
-                      if (value.isNotEmpty) {
-                        _searchCompounds(value);
-                      }
-                    },
-                  ),
-                ),
+                      const SizedBox(height: 24),
 
-                const SizedBox(height: 20),
-
-                // Progress indicator section - shown during active search
-                if (_progress != SearchProgress.idle &&
-                    _progress != SearchProgress.complete)
-                  Column(
-                    children: [
-                      // Progress bar
-                      LinearProgressIndicator(
-                        value: _progress == SearchProgress.error ? 1.0 : null,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          _progress == SearchProgress.error
-                              ? Colors.red
-                              : Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Progress message
-                      Text(
-                        _progressMessage,
-                        style: TextStyle(
-                          color: _progress == SearchProgress.error
-                              ? Colors.red
-                              : Colors.grey[200],
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                      // Step indicator with icon (if not in error state)
-                      if (_progress != SearchProgress.error)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                _getProgressIcon(_progress),
-                                size: 16,
-                                color: Colors.grey[400],
+                      // Progress indicator section - shown during active search
+                      if (_progress != SearchProgress.idle &&
+                          _progress != SearchProgress.complete)
+                        Column(
+                          children: [
+                            // Progress bar
+                            LinearProgressIndicator(
+                              value: _progress == SearchProgress.error
+                                  ? 1.0
+                                  : null,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                _progress == SearchProgress.error
+                                    ? Colors.red
+                                    : Theme.of(context).colorScheme.primary,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _getProgressStep(_progress),
-                                style: TextStyle(
-                                  color: Colors.grey[400],
-                                  fontSize: 12,
-                                ),
+                            ),
+                            const SizedBox(height: 8),
+                            // Progress message
+                            Text(
+                              _progressMessage,
+                              style: TextStyle(
+                                color: _progress == SearchProgress.error
+                                    ? Colors.red
+                                    : Colors.grey[200],
+                                fontStyle: FontStyle.italic,
                               ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  )
-                // Error message display
-                else if (_errorMessage.isNotEmpty)
-                  Text(_errorMessage, style: const TextStyle(color: Colors.red))
-                // Results display - list of compound cards
-                else if (_compoundsResult.isNotEmpty)
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _compoundsResult.length,
-                    itemBuilder: (context, index) {
-                      final compound = _compoundsResult[index];
-                      final cid = compound['cid']?.toString();
-                      // Get image URL from PubChem using compound ID
-                      final imageUrl = cid != null
-                          ? 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/PNG'
-                          : null;
-
-                      // Create card for each compound
-                      return Card(
-                        color: Colors.deepPurple.withOpacity(0.1),
-                        elevation: 0,
-                        margin: const EdgeInsets.symmetric(vertical: 12.0),
-                        child: InkWell(
-                          // Navigate to chat screen with compound data when tapped
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ChatWidget(compoundData: compound),
-                              ),
-                            );
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                // Left side: Image and publication info
-                                Column(
+                            ),
+                            // Step indicator with icon (if not in error state)
+                            if (_progress != SearchProgress.error)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    // Compound molecular structure image
-                                    Container(
-                                      width: 180,
-                                      height: 180,
-                                      clipBehavior: Clip.hardEdge,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: imageUrl != null
-                                          ? OverflowBox(
-                                              // Make image larger than container to enable cropping
-                                              maxWidth: 290,
-                                              maxHeight: 290,
-                                              child: Center(
-                                                child: Image.network(
-                                                  imageUrl,
-                                                  fit: BoxFit.cover,
-                                                  width: 225,
-                                                  height: 225,
-                                                  errorBuilder: (c, e, s) =>
-                                                      const Icon(
-                                                        Icons
-                                                            .image_not_supported,
-                                                        size: 60,
-                                                      ),
-                                                ),
-                                              ),
-                                            )
-                                          : const Icon(
-                                              Icons.image_not_supported,
-                                              size: 60,
-                                            ),
+                                    Icon(
+                                      _getProgressIcon(_progress),
+                                      size: 16,
+                                      color: Colors.grey[400],
                                     ),
-                                    const SizedBox(height: 8),
-
-                                    // Publication count from PubMed
-                                    FutureBuilder<String>(
-                                      future: getPublicationCount(cid ?? ''),
-                                      builder: (context, snapshot) {
-                                        return Text(
-                                          'PubMed Citations: ${snapshot.data ?? "Loading..."}',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.blueGrey[700],
-                                          ),
-                                        );
-                                      },
-                                    ),
-
-                                    // Button to search Google Scholar
-                                    ElevatedButton.icon(
-                                      label: const Text('Scholar it!'),
-                                      style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        textStyle: const TextStyle(
-                                          fontSize: 13,
-                                        ),
-                                        minimumSize: const Size(0, 32),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _getProgressStep(_progress),
+                                      style: TextStyle(
+                                        color: Colors.grey[400],
+                                        fontSize: baseFontSize - 2.0,
                                       ),
-                                      onPressed: () {
-                                        // Construct URL with compound name and user's search query
-                                        final moleculeName =
-                                            Uri.encodeComponent(
-                                              compound['name'] ?? '',
-                                            );
-                                        final userDesc = Uri.encodeComponent(
-                                          _searchController.text,
-                                        );
-                                        final scholarUrl =
-                                            'https://scholar.google.com/scholar?q="$moleculeName"+$userDesc';
-                                        // Launch Google Scholar search
-                                        launchUrl(Uri.parse(scholarUrl));
-                                      },
                                     ),
                                   ],
                                 ),
+                              ),
+                          ],
+                        )
+                      // Error message display
+                      else if (_errorMessage.isNotEmpty)
+                        Text(
+                          _errorMessage,
+                          style: TextStyle(color: Colors.red),
+                        )
+                      // Results display - list of compound cards
+                      else if (_compoundsResult.isNotEmpty)
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _compoundsResult.length,
+                          itemBuilder: (context, index) {
+                            final compound = _compoundsResult[index];
+                            final cid = compound['cid']?.toString();
+                            final imageUrl = cid != null
+                                ? 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/PNG'
+                                : null;
 
-                                const SizedBox(width: 16),
-
-                                // Right side: Compound details
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // Compound name with emphasis
-                                      Text(
-                                        compound['name'] ?? 'N/A',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 20),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: Card(
+                                margin: EdgeInsets.zero,
+                                clipBehavior: Clip.antiAlias,
+                                child: InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ChatWidget(compoundData: compound),
                                       ),
-                                      const SizedBox(height: 8),
-
-                                      // Display all compound properties except name (already shown)
-                                      ...compound.entries
-                                          .where((entry) => entry.key != 'name')
-                                          .map(
-                                            (entry) => Padding(
-                                              padding: const EdgeInsets.only(
-                                                bottom: 4.0,
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            // Image Section
+                                            Container(
+                                              width: 100,
+                                              height: 100,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
                                               ),
-                                              child: Text(
-                                                '${entry.key}: ${entry.value}',
+                                              child: imageUrl != null
+                                                  ? Image.network(
+                                                      imageUrl,
+                                                      fit: BoxFit.contain,
+                                                      errorBuilder: (c, e, s) =>
+                                                          Icon(
+                                                            Icons.science,
+                                                            size: 40,
+                                                          ),
+                                                    )
+                                                  : Icon(
+                                                      Icons.science,
+                                                      size: 40,
+                                                    ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            // Title & Basic Info
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    compound['name'] ??
+                                                        'Unknown Compound',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: baseFontSize + 4.0,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    'ID: ${compound['cid'] ?? 'N/A'}',
+                                                    style: TextStyle(
+                                                      color: Colors.white
+                                                          .withOpacity(0.5),
+                                                      fontSize: baseFontSize - 2.0,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  FutureBuilder<String>(
+                                                    future: getPublicationCount(
+                                                      cid ?? '',
+                                                    ),
+                                                    builder: (context, snapshot) {
+                                                      return Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 4,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: const Color(
+                                                            0xFF6366F1,
+                                                          ).withOpacity(0.1),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8,
+                                                              ),
+                                                          border: Border.all(
+                                                            color: const Color(
+                                                              0xFF6366F1,
+                                                            ).withOpacity(0.3),
+                                                          ),
+                                                        ),
+                                                        child: Row(
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: [
+                                                            Icon(
+                                                              Icons
+                                                                  .article_outlined,
+                                                              size: 14,
+                                                              color: Color(
+                                                                0xFF6366F1,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                              width: 4,
+                                                            ),
+                                                            Text(
+                                                              '${snapshot.data ?? "..."} Citations',
+                                                              style: TextStyle(
+                                                                fontSize: baseFontSize - 3.0,
+                                                                color: Color(
+                                                                  0xFF818CF8,
+                                                                ),
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                          ),
-                                    ],
+                                          ],
+                                        ),
+                                        const SizedBox(height: 16),
+                                        // Properties Grid/List
+                                        Wrap(
+                                          spacing: 8,
+                                          runSpacing: 8,
+                                          children: compound.entries
+                                              .where(
+                                                (e) =>
+                                                    e.key != 'name' &&
+                                                    e.key != 'cid',
+                                              )
+                                              .map(
+                                                (e) => Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 6,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white
+                                                        .withOpacity(0.05),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          10,
+                                                        ),
+                                                  ),
+                                                  child: Text(
+                                                    '${e.key}: ${e.value}',
+                                                    style: TextStyle(
+                                                      fontSize: baseFontSize - 2.0,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                              .toList(),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        // Action Bar
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: ElevatedButton.icon(
+                                                onPressed: () {
+                                                  final moleculeName =
+                                                      Uri.encodeComponent(
+                                                        compound['name'] ?? '',
+                                                      );
+                                                  final userDesc =
+                                                      Uri.encodeComponent(
+                                                        _searchController.text,
+                                                      );
+                                                  final scholarUrl =
+                                                      'https://scholar.google.com/scholar?q="$moleculeName"+$userDesc';
+                                                  launchUrl(
+                                                    Uri.parse(scholarUrl),
+                                                  );
+                                                },
+                                                icon: Icon(
+                                                  Icons.school_rounded,
+                                                  size: 18,
+                                                ),
+                                                label: Text(
+                                                  'Scholar search',
+                                                ),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(
+                                                    0xFF6366F1,
+                                                  ),
+                                                  minimumSize: const Size(
+                                                    double.infinity,
+                                                    40,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            IconButton.filledTonal(
+                                              onPressed:
+                                                  () {}, // Potential for more actions
+                                              icon: Icon(
+                                                Icons.share_rounded,
+                                                size: 20,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  )
-                // Empty state - no results yet
-                else
-                  const Text(''),
-              ],
-            ),
+                              ),
+                            );
+                          },
+                        )
+                      // Empty state - no results yet
+                      else
+                        Text(''),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
+        ],
       ),
     );
   }

@@ -1,0 +1,95 @@
+{
+  "appInfo": {
+    "appName": "ChemNOR",
+    "packageName": "com.chemnor.app",
+    "version": "1.0.0",
+    "buildNumber": "1"
+  },
+  "googlePlayStore": {
+    "title": "ChemNOR - AI Chemistry Assistant",
+    "shortDescription": "Your Intelligent Chemistry Assistant, Powered by AI",
+    "fullDescription": "🧪 Welcome to ChemNOR - The ultimate AI-powered chemistry companion!\n\nChemNOR brings advanced chemistry tools and artificial intelligence to your fingertips. Search chemical compounds, analyze molecular structures, and chat with an AI chemist—all in one sleek, user-friendly application.\n\n✨ KEY FEATURES:\n\n🔍 COMPOUND SEARCH\nSearch chemical compounds by name or formula using natural language. Get instant access to detailed properties, molecular weights, chemical formulas, and PubChem images.\n\n🤖 AI CHEMISTRY CHAT\nChat with an AI assistant about any chemical compound or chemistry topic. Get context-aware answers powered by the ChemNOR and Gemini APIs.\n\n🧪 ADVANCED CHEMISTRY TOOLS\nUse specialized chemistry tools including the 'chemist' function for deeper structural and property analysis.\n\n📜 CHAT HISTORY\nSave and revisit your chemistry discussions locally. Long-press entries to copy text or delete them.\n\n⚙️ CUSTOMIZABLE SETTINGS\nConfigure API keys, adjust font sizes, and personalize your experience.\n\n🎨 MODERN, RESPONSIVE UI\nEnjoy a beautiful interface with stylish navigation, Markdown rendering, mathematical formula support, and fully responsive design.\n\n💡 PERFECT FOR:\n• High school and university chemistry students\n• Chemistry teachers and educators\n• Research professionals and chemists\n• Chemistry enthusiasts and hobbyists\n\n🔐 PRIVACY & SECURITY:\nChemNOR respects your privacy. API keys are stored securely on your device.",
+    "categories": ["Education", "Science"],
+    "keywords": ["chemistry", "compound search", "molecular structure", "AI assistant", "chemistry tools", "educational", "science app", "chemistry student", "molecular weight", "chemical properties"],
+    "contentRating": "4+",
+    "privacyPolicyUrl": "https://example.com/privacy",
+    "website": "https://github.com/yourusername/chemnor",
+    "email": "support@chemnor.app",
+    "screenshots": [
+      {
+        "filename": "screenshot_1_search.png",
+        "title": "Search Compounds",
+        "description": "Search chemical compounds by name or formula instantly"
+      },
+      {
+        "filename": "screenshot_2_details.png",
+        "title": "Compound Details",
+        "description": "View detailed properties, molecular weight, and PubChem images"
+      },
+      {
+        "filename": "screenshot_3_chat.png",
+        "title": "AI Chemistry Chat",
+        "description": "Chat with AI for context-aware chemistry answers"
+      },
+      {
+        "filename": "screenshot_4_history.png",
+        "title": "Chat History",
+        "description": "Save and manage your chemistry discussions"
+      },
+      {
+        "filename": "screenshot_5_settings.png",
+        "title": "Settings",
+        "description": "Customize API keys, font size, and preferences"
+      }
+    ]
+  },
+  "appleAppStore": {
+    "title": "ChemNOR",
+    "subtitle": "AI Chemistry Assistant",
+    "description": "ChemNOR brings advanced chemistry tools and artificial intelligence to your fingertips. Search chemical compounds, analyze molecular structures, and chat with an AI chemist—all in one sleek, user-friendly application.\n\n✨ KEY FEATURES:\n\n🔍 Compound Search - Search chemical compounds by name or formula instantly.\n\n🤖 AI Chemistry Chat - Chat with an AI assistant about any chemical compound.\n\n🧪 Chemistry Tools - Advanced analysis tools for structural analysis and property calculations.\n\n📜 Chat History - Save your chemistry conversations locally.\n\n⚙️ Customizable Settings - Adjust font sizes and preferences.\n\n🎨 Modern Interface - Beautiful design with Markdown rendering and responsive layout.\n\nPerfect for students, educators, researchers, and chemistry enthusiasts!",
+    "category": "Education",
+    "subcategories": ["Science"],
+    "keywords": "chemistry,compound search,molecular structure,AI assistant,chemistry tools,educational,science",
+    "ratingDescription": "4+",
+    "privacyPolicyUrl": "https://example.com/privacy",
+    "supportUrl": "https://github.com/yourusername/chemnor",
+    "screenshots": [
+      {
+        "filename": "screenshot_1_search.png",
+        "title": "Search Compounds",
+        "description": "Search chemical compounds instantly"
+      },
+      {
+        "filename": "screenshot_2_details.png",
+        "title": "Compound Details",
+        "description": "View detailed chemical properties"
+      },
+      {
+        "filename": "screenshot_3_chat.png",
+        "title": "AI Chat",
+        "description": "Chat with AI chemist"
+      },
+      {
+        "filename": "screenshot_4_history.png",
+        "title": "History",
+        "description": "Manage your discussions"
+      },
+      {
+        "filename": "screenshot_5_settings.png",
+        "title": "Settings",
+        "description": "Customize your experience"
+      }
+    ]
+  },
+  "general": {
+    "developerName": "Your Name/Company",
+    "developerEmail": "dev@chemnor.app",
+    "supportEmail": "support@chemnor.app",
+    "price": "Free",
+    "currency": "USD",
+    "inAppPurchases": false,
+    "contentRating": "4+",
+    "languages": ["English"],
+    "releaseNotes": "Version 1.0.0 - Initial Release\n\n🎉 Welcome to ChemNOR v1.0.0!\n\nThis is the official launch of ChemNOR, your AI-powered chemistry assistant.\n\n✨ Features:\n• Search chemical compounds instantly\n• Chat with an AI chemistry assistant\n• Save your chat history\n• Customizable settings and preferences\n• Beautiful, responsive user interface\n\n🙏 Thank you for downloading ChemNOR!"
+  }
+}

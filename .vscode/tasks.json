@@ -1,0 +1,57 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "flutter",
+			"command": "flutter",
+			"args": [
+				"build",
+				"web"
+			],
+			"group": "build",
+			"problemMatcher": [],
+			"label": "flutter: flutter build web",
+			"detail": ""
+		},
+		{
+			"type": "flutter",
+			"command": "flutter",
+			"args": [
+				"build",
+				"apk"
+			],
+			"group": "build",
+			"problemMatcher": [],
+			"label": "flutter: flutter build apk",
+			"detail": ""
+		},
+		{
+			"type": "flutter",
+			"command": "flutter",
+			"args": [
+				"build",
+				"web",
+				"&&",
+				"flutter",
+				"build",
+				"apk",
+				"&&",
+				"flutter",
+				"build",
+				"windows",
+				"&&",
+				"flutter",
+				"build",
+				"macos",
+				"&&",
+				"flutter",
+				"build",
+				"linux",
+			],
+			"group": "build",
+			"problemMatcher": [],
+			"label": "flutter: flutter build apk web windows linux macos (all)",
+			"detail": ""
+		},
+	]
+}

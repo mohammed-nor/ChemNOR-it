@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:chem_nor/chem_nor.dart';
@@ -29,7 +30,14 @@ class _JsonFetchScreenState extends State<JsonFetchScreen> {
   final TextEditingController _controller = TextEditingController();
   List<List> _dataa = [];
   bool _isLoading = false;
-  final finder = ChemNOR(genAiApiKey: 'your-api-key');
+  final finder = ChemNOR(
+    genAiApiKey: 'your-api-key',
+    model: GeminiModel.fromString(
+      Hive.box(
+        'settingBox',
+      ).get('selectedModel', defaultValue: 'gemini2_5flash'),
+    ).apiName,
+  );
 
   Future<void> _fetchData(String queryS) async {
     setState(() => _isLoading = true);

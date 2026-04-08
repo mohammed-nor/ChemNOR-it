@@ -9,7 +9,8 @@
 library;
 
 // Import necessary packages
-import 'package:flutter/material.dart'; // Flutter UI components
+import 'package:flutter/material.dart';
+import 'package:chemnor_it/main.dart'; // Flutter UI components
 // For clipboard functionality
 import 'package:gpt_markdown/gpt_markdown.dart'; // For markdown rendering
 import 'package:hive/hive.dart'; // Local storage
@@ -30,7 +31,10 @@ class ChatWidget extends StatefulWidget {
 }
 
 /// State class for the compound-specific chat widget
-class _ChatWidgetState extends State<ChatWidget> {
+class _ChatWidgetState extends State<ChatWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
   // Scroll controller for the chat messages list
   final ScrollController _scrollController = ScrollController();
 
@@ -54,6 +58,15 @@ class _ChatWidgetState extends State<ChatWidget> {
   // Initialize state when widget is created
   void initState() {
     super.initState();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
+    _fadeController.forward();
 
     // If compound data is provided, send an initial message about it
     if (widget.compoundData != null) {
@@ -70,6 +83,15 @@ class _ChatWidgetState extends State<ChatWidget> {
       // Send initial message to AI
       _sendInitialCompoundMessage(initialPrompt);
     }
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _scrollController.dispose();
+    _textController.dispose();
+    _textFieldFocus.dispose();
+    super.dispose();
   }
 
   /// Process AI response text to improve conversational flow
@@ -134,6 +156,7 @@ class _ChatWidgetState extends State<ChatWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final baseFontSize = settingsController.value.fontSize;
     final textFieldDecoration = InputDecoration(
       contentPadding: const EdgeInsets.all(15),
       hintText: 'Enter a prompt...',
@@ -148,97 +171,142 @@ class _ChatWidgetState extends State<ChatWidget> {
     );
     return SafeArea(
       child: Scaffold(
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
           title: Text(
             widget.compoundData?['name'] != null
                 ? 'Chat: ${widget.compoundData!['name']}'
                 : 'Chat',
+            style: TextStyle(
+              fontSize: baseFontSize + 4.0,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  itemBuilder: (context, idx) {
-                    final content = _generatedContent[idx];
-                    return MessageWidget(
-                      text: content.text,
-                      image: content.image,
-                      isFromUser: content.fromUser,
-                    );
-                  },
-                  itemCount: _generatedContent.length,
+        body: Stack(
+          children: [
+            // Premium Designed Background
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 25,
-                  horizontal: 15,
-                ),
-                child: Row(
+                child: Stack(
                   children: [
-                    Expanded(
-                      child: TextField(
-                        autofocus: true,
-                        focusNode: _textFieldFocus,
-                        decoration: textFieldDecoration,
-                        controller: _textController,
-                        onSubmitted: _sendChatMessage,
-                      ),
-                    ),
-                    const SizedBox.square(dimension: 15),
-                    IconButton(
-                      onPressed: !_loading
-                          ? () async {
-                              // Chemistry-related action: call chemist method from ChemnorApi
-                              if (widget.compoundData != null &&
-                                  widget.compoundData!['cid'] != null) {
-                                final cid = widget.compoundData!['cid']
-                                    .toString();
-                                final result = await ApiSrv.chemist(cid);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Chemist result: $result'),
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('No compound selected.'),
-                                  ),
-                                );
-                              }
-                            }
-                          : null,
-                      icon: Icon(
-                        Icons.science, // Chemistry-related icon
-                        color: _loading
-                            ? Theme.of(context).colorScheme.secondary
-                            : Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    if (!_loading)
-                      IconButton(
-                        onPressed: () async {
-                          _sendChatMessage(_textController.text);
-                        },
-                        icon: Icon(
-                          Icons.send,
-                          color: Theme.of(context).colorScheme.primary,
+                    Positioned(
+                      top: 100,
+                      right: -100,
+                      child: Container(
+                        width: 400,
+                        height: 400,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF6366F1).withOpacity(0.06),
                         ),
-                      )
-                    else
-                      const CircularProgressIndicator(),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+
+            // Chat Content
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      itemBuilder: (context, idx) {
+                        final content = _generatedContent[idx];
+                        return MessageWidget(
+                          text: content.text,
+                          image: content.image,
+                          isFromUser: content.fromUser,
+                        );
+                      },
+                      itemCount: _generatedContent.length,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 25,
+                      horizontal: 15,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            autofocus: true,
+                            focusNode: _textFieldFocus,
+                            decoration: textFieldDecoration,
+                            controller: _textController,
+                            onSubmitted: _sendChatMessage,
+                          ),
+                        ),
+                        const SizedBox.square(dimension: 15),
+                        IconButton(
+                          onPressed: !_loading
+                              ? () async {
+                                  // Chemistry-related action: call chemist method from ChemnorApi
+                                  if (widget.compoundData != null &&
+                                      widget.compoundData!['cid'] != null) {
+                                    final cid = widget.compoundData!['cid']
+                                        .toString();
+                                    final result = await ApiSrv.chemist(cid);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Chemist result: $result',
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('No compound selected.'),
+                                      ),
+                                    );
+                                  }
+                                }
+                              : null,
+                          icon: Icon(
+                            Icons.science, // Chemistry-related icon
+                            color: _loading
+                                ? Theme.of(context).colorScheme.secondary
+                                : Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        if (!_loading)
+                          IconButton(
+                            onPressed: () async {
+                              _sendChatMessage(_textController.text);
+                            },
+                            icon: Icon(
+                              Icons.send,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          )
+                        else
+                          const CircularProgressIndicator(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -340,60 +408,125 @@ class MessageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isAI = !isFromUser; // Helper flag for clarity
+    final baseFontSize = settingsController.value.fontSize;
+    final isAI = !isFromUser;
+    final theme = Theme.of(context);
 
-    // Create row layout with appropriate alignment
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      // Align user messages to right, AI messages to left
-      mainAxisAlignment: isFromUser
-          ? MainAxisAlignment.end
-          : MainAxisAlignment.start,
-      children: [
-        // Show image if available
-        if (image != null) image!,
-
-        // Message bubble
-        Flexible(
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              // User messages have background color, AI messages are transparent
-              color: isFromUser
-                  ? const Color.fromARGB(255, 40, 0, 114)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: isFromUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
+        children: [
+          if (isAI)
+            Container(
+              margin: const EdgeInsets.only(right: 8, top: 4),
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                child: Icon(
+                  Icons.science_rounded,
+                  size: 18,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // Render message text as markdown if available
-                if (text != null) GptMarkdown(text!),
-
-                // Add save button for AI messages
-                if (isAI && text != null)
-                  IconButton(
-                    icon: const Icon(
-                      Icons.bookmark_add,
-                      color: Colors.amber,
-                      size: 22,
-                    ),
-                    tooltip: 'Save to history',
-                    // Save message to history box on press
-                    onPressed: () async {
-                      final box = Hive.box<String>('historyBox');
-                      await box.add(text!);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Saved to history!')),
-                      );
-                    },
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                gradient: isFromUser
+                    ? const LinearGradient(
+                        colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
+                color: isAI ? theme.colorScheme.surface : null,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(20),
+                  topRight: const Radius.circular(20),
+                  bottomLeft: Radius.circular(isFromUser ? 20 : 4),
+                  bottomRight: Radius.circular(isFromUser ? 4 : 20),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-              ],
+                ],
+                border: isAI
+                    ? Border.all(color: Colors.white.withOpacity(0.05))
+                    : null,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (text != null)
+                    GptMarkdown(
+                      text!,
+                      style: TextStyle(
+                        color: isFromUser
+                            ? Colors.white
+                            : theme.textTheme.bodyMedium?.color,
+                        fontSize: baseFontSize + 1.0,
+                        height: 1.4,
+                      ),
+                    ),
+                  if (isAI && text != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: () async {
+                              final box = Hive.box<String>('historyBox');
+                              await box.add(text!);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Saved to history!'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(4.0),
+                              child: Icon(
+                                Icons.bookmark_add_outlined,
+                                color: Colors.amber,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+          if (isFromUser)
+            Container(
+              margin: const EdgeInsets.only(left: 8, top: 4),
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
+                child: Icon(
+                  Icons.person_rounded,
+                  size: 18,
+                  color: Colors.white70,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -407,7 +540,10 @@ class ChatPage extends StatefulWidget {
 }
 
 /// State class for the general chat page
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
   // Scroll controller for the chat messages list
   final ScrollController _scrollController = ScrollController();
 
@@ -431,8 +567,27 @@ class _ChatPageState extends State<ChatPage> {
   // Initialize state when widget is created
   void initState() {
     super.initState();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
+    _fadeController.forward();
+
     // Send welcome message when chat is opened
     _sendWelcomeMessage();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _scrollController.dispose();
+    _textController.dispose();
+    _textFieldFocus.dispose();
+    super.dispose();
   }
 
   @override
@@ -541,7 +696,7 @@ class _ChatPageState extends State<ChatPage> {
     final String? cid = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Chemical Application'),
+        title: Text('Chemical Application'),
         content: TextField(
           decoration: const InputDecoration(
             hintText: 'Enter the chemical application you desired',
@@ -553,11 +708,11 @@ class _ChatPageState extends State<ChatPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(cidController.text),
-            child: const Text('Submit'),
+            child: Text('Submit'),
           ),
         ],
       ),
@@ -603,6 +758,7 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    final baseFontSize = settingsController.value.fontSize;
     final textFieldDecoration = InputDecoration(
       contentPadding: const EdgeInsets.all(15),
       hintText: 'Type a message...',
@@ -618,255 +774,243 @@ class _ChatPageState extends State<ChatPage> {
 
     return SafeArea(
       child: Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      children: <TextSpan>[
-                        TextSpan(
-                          text: 'ChemNOR ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: 22,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'it!',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.redAccent,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ],
-                    ),
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
+            // Premium Designed Background
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: TextStyle(),
-                      children: <TextSpan>[
-                        TextSpan(
-                          text: 'C',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'hemical ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'H',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'euristic ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'E',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'valuation of ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'M',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'olecules ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'N',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'etworking for ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'O',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'ptimized ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'R',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'eactivity',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              /*
-        appBar: AppBar(
-          title: const Text('ChemNOR Chat'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.info_outline),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder:
-                      (context) => AlertDialog(
-                        title: const Text('About ChemNOR Chat'),
-                        content: const Text(
-                          'This is a general chat interface where you can ask questions about chemistry.\n\n'
-                          'Use the "Chemist" button to analyze specific chemical compounds by CID.',
-                        ),
-                        actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close'))],
-                      ),
-                );
-              },
-            ),
-          ],
-        ),*/
-              Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  itemBuilder: (context, idx) {
-                    final message = _chatMessages[idx];
-                    return MessageBubble(
-                      text: message.text,
-                      image: message.image,
-                      isFromUser: message.fromUser,
-                    );
-                    //return MessageWidget(text: message.text, image: message.image, isFromUser: message.fromUser);
-                  },
-                  itemCount: _chatMessages.length,
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 16,
-                  horizontal: 8,
-                ),
-                child: Row(
+                child: Stack(
                   children: [
-                    Expanded(
-                      child: TextField(
-                        autofocus: true,
-                        focusNode: _textFieldFocus,
-                        decoration: textFieldDecoration,
-                        controller: _textController,
-                        onSubmitted: _sendMessage,
-                        maxLines: null,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: _loading ? null : () => _useChemistFunction(),
-                      icon: Icon(
-                        Icons.science,
-                        color: _loading
-                            ? Theme.of(
-                                context,
-                              ).colorScheme.secondary.withOpacity(0.5)
-                            : Theme.of(context).colorScheme.secondary,
-                      ),
-                      tooltip: 'Use Chemist Function',
-                    ),
-                    IconButton(
-                      onPressed: _loading
-                          ? null
-                          : () => _sendMessage(_textController.text),
-                      icon: Icon(
-                        Icons.send,
-                        color: _loading
-                            ? Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.5)
-                            : Theme.of(context).colorScheme.primary,
+                    Positioned(
+                      bottom: 100,
+                      left: -100,
+                      child: Container(
+                        width: 400,
+                        height: 400,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF4F46E5).withOpacity(0.06),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              if (_loading)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: LinearProgressIndicator(
-                    backgroundColor: Theme.of(context).colorScheme.surface,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Theme.of(context).colorScheme.primary,
+            ),
+
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'ChemNOR ',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: baseFontSize + 4.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'it! ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.redAccent,
+                                fontSize: baseFontSize,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'Chat\n',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: baseFontSize,
+                                fontWeight: FontWeight.w300,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'C',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'hemical ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'H',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'euristic ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'E',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'valuation of ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'M',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'olecules ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'N',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'etworking for ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'O',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'ptimized ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'R',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'eactivity',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      itemBuilder: (context, idx) {
+                        final message = _chatMessages[idx];
+                        return MessageBubble(
+                          text: message.text,
+                          image: message.image,
+                          isFromUser: message.fromUser,
+                        );
+                      },
+                      itemCount: _chatMessages.length,
                     ),
                   ),
-                ),
-            ],
-          ),
+                  if (_loading)
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      IconButton.filledTonal(
+                        onPressed: !_loading ? _useChemistFunction : null,
+                        icon: Icon(Icons.science_rounded),
+                        tooltip: 'Chemist Function',
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          focusNode: _textFieldFocus,
+                          controller: _textController,
+                          decoration: textFieldDecoration,
+                          onSubmitted: (value) => _sendMessage(value),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.filled(
+                        onPressed: !_loading
+                            ? () => _sendMessage(_textController.text)
+                            : null,
+                        icon: Icon(Icons.send_rounded),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -887,6 +1031,7 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final baseFontSize = settingsController.value.fontSize;
     return Align(
       alignment: isFromUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -909,11 +1054,7 @@ class MessageBubble extends StatelessWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child: IconButton(
-                  icon: const Icon(
-                    Icons.bookmark_add,
-                    color: Colors.amber,
-                    size: 22,
-                  ),
+                  icon: Icon(Icons.bookmark_add, color: Colors.amber, size: 22),
                   onPressed: () async {
                     final box = Hive.box<String>('historyBox');
                     await box.add(text!);

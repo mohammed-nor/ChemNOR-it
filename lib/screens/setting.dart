@@ -9,8 +9,8 @@ library;
 
 // Import necessary packages
 import 'package:chem_nor/chem_nor.dart'; // For GeminiModel enum
-import 'package:chemnor_it/key.dart'; // For default API key access
 import 'package:chemnor_it/main.dart'; // App configuration
+import 'package:chemnor_it/services/ChemnorApi.dart'; // For manual re-initialization
 import 'package:flutter/material.dart'; // Flutter UI components
 import 'package:hive/hive.dart'; // For persistent storage access
 import 'package:hive_flutter/hive_flutter.dart'; // For Hive Flutter integration
@@ -30,7 +30,10 @@ class SettingPage extends StatefulWidget {
 }
 
 /// State class for the settings page
-class _SettingsPageState extends State<SettingPage> {
+class _SettingsPageState extends State<SettingPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
   // Store current app settings
   late AppSettings _settings;
 
@@ -48,6 +51,16 @@ class _SettingsPageState extends State<SettingPage> {
   // Initialize state when widget is created
   void initState() {
     super.initState();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
+    _fadeController.forward();
+
     // Get current settings from the controller
     _settings = settingsController.value;
 
@@ -55,6 +68,12 @@ class _SettingsPageState extends State<SettingPage> {
     if (!llmModels.contains(_settings.selectedModel)) {
       _updateSettings(selectedModel: llmModels[1]); // Default to second model
     }
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
   }
 
   // Method to update settings via the controller
@@ -95,155 +114,461 @@ class _SettingsPageState extends State<SettingPage> {
   }
 
   @override
-  // Build the UI for the settings page
   Widget build(BuildContext context) {
+    final baseFontSize = settingsController.value.fontSize;
+    final theme = Theme.of(context);
+
     return Scaffold(
-      // App bar with centered title
-      //appBar: AppBar(centerTitle: true, title: const Text("Settings")),
-
-      // Main content
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            const SizedBox(height: 10),
-            const SizedBox(height: 10),
-            Text(
-              "This App is Developed by",
-              style: TextStyle(
-                fontSize: _settings.fontSize,
-                color: Colors.grey.shade500,
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          // Premium Designed Background
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-            ClipOval(
-              child: Image.asset('images/1.png', width: 200, height: 200),
-            ),
-
-            //clipBehavior: Clip.hardEdge,clipper: ,
-            const SizedBox(height: 10),
-            Text(
-              "NOR MOHAMMED",
-              style: TextStyle(
-                fontSize: _settings.fontSize + 6,
-                fontWeight: FontWeight.bold,
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -120,
+                    left: -120,
+                    child: Container(
+                      width: 400,
+                      height: 400,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF6366F1).withOpacity(0.08),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -150,
+                    right: -150,
+                    child: Container(
+                      width: 500,
+                      height: 500,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF4F46E5).withOpacity(0.05),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 5),
-            Text(
-              "nour1608@gmail.com",
-              style: TextStyle(
-                fontSize: _settings.fontSize,
-                color: Colors.grey[700],
+          ),
+
+          // Content
+          CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 140.0,
+                floating: false,
+                pinned: true,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                scrolledUnderElevation: 0,
+                flexibleSpace: FlexibleSpaceBar(
+                  centerTitle: true,
+                  title: RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'ChemNOR ',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: baseFontSize + 4.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'it! ',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.redAccent,
+                            fontSize: baseFontSize,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'Settings',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: baseFontSize,
+                            fontWeight: FontWeight.w300,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton.icon(
-              onPressed: () async {
-                // Define the URL explicitly (it seems 'githubUrl' might be undefined)
-                const String githubUrl = "https://github.com/mohammed-nor";
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Developer Profile Section
+                      _buildSectionTitle('Developer'),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.05),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 40,
+                                  backgroundColor: theme.colorScheme.primary
+                                      .withOpacity(0.1),
+                                  child: ClipOval(
+                                    child: Image.asset(
+                                      'images/1.png',
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (c, e, s) =>
+                                          Icon(Icons.person, size: 40),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 20),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'NOR MOHAMMED',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: baseFontSize + 4.0,
+                                        ),
+                                      ),
+                                      Text(
+                                        'nour1608@gmail.com',
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.5),
+                                          fontSize: baseFontSize,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          _buildSocialButton(
+                                            baseFontSize: baseFontSize,
+                                            icon: Icons.link_rounded,
+                                            label: 'GitHub',
+                                            onTap: () => launchUrl(
+                                              Uri.parse(
+                                                "https://github.com/mohammed-nor",
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
 
-                launchUrl(Uri.parse(githubUrl));
-              },
-              icon: const Icon(Icons.link),
-              label: const Text("GitHub"),
-            ),
-            const SizedBox(height: 40),
-            // Model selection section
-            const Text("LLM Model that you want to use"),
-            // Dropdown for model selection
-            DropdownButton<GeminiModel>(
-              value: _settings.selectedModel,
-              alignment: AlignmentDirectional.center,
-              items: llmModels.map((GeminiModel model) {
-                return DropdownMenuItem<GeminiModel>(
-                  value: model,
-                  child: Text(model.name),
-                );
-              }).toList(),
-              // Handle model change
-              onChanged: (GeminiModel? newValue) {
-                if (newValue != null) {
-                  // Update settings with new model
-                  _updateSettings(selectedModel: newValue);
-                  // Save model selection to Hive directly
-                  Hive.box('settingBox').put(
-                    'selectedModel',
-                    AppSettings.geminiModelToString(newValue),
-                  );
-                }
-              },
-            ),
+                      // AI Configuration Section
+                      _buildSectionTitle('AI Configuration'),
+                      _buildSettingCard(
+                        baseFontSize: baseFontSize,
+                        title: 'LLM Model',
+                        subtitle: 'Choose the Gemini model for processing',
+                        icon: Icons.psychology_rounded,
+                        child: DropdownButtonHideUnderline(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: DropdownButton<GeminiModel>(
+                              value: _settings.selectedModel,
+                              dropdownColor: theme.colorScheme.surface,
+                              icon: Icon(Icons.keyboard_arrow_down_rounded),
+                              items: llmModels.map((GeminiModel model) {
+                                return DropdownMenuItem<GeminiModel>(
+                                  value: model,
+                                  child: Text(
+                                    model.name,
+                                    style: TextStyle(fontSize: baseFontSize),
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (GeminiModel? newValue) {
+                                if (newValue != null) {
+                                  _updateSettings(selectedModel: newValue);
+                                  Hive.box('settingBox').put(
+                                    'selectedModel',
+                                    AppSettings.geminiModelToString(newValue),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildSettingCard(
+                        baseFontSize: baseFontSize,
+                        title: 'API Key',
+                        subtitle: 'Configure your Gemini API key',
+                        icon: Icons.vpn_key_rounded,
+                        child: Column(
+                          children: [
+                            TextField(
+                              decoration: InputDecoration(
+                                hintText: 'Enter API Key',
+                                prefixIcon: Icon(Icons.key_rounded, size: 20),
+                                suffixIcon: _settings.geminiApiKey.isNotEmpty
+                                    ? Icon(
+                                        Icons.check_circle_rounded,
+                                        color: Colors.green.shade400,
+                                        size: 20,
+                                      )
+                                    : null,
+                              ),
+                              controller: TextEditingController(
+                                text: _settings.geminiApiKey,
+                              ),
+                              style: TextStyle(fontSize: baseFontSize),
+                              onSubmitted: (value) =>
+                                  _updateSettings(geminiApiKey: value),
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton.icon(
+                              onPressed: () => launchUrl(
+                                Uri.parse(
+                                  "https://aistudio.google.com/app/api-keys",
+                                ),
+                              ),
+                              icon: Icon(Icons.open_in_new_rounded, size: 16),
+                              label: Text('Get API Key'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.primary
+                                    .withOpacity(0.1),
+                                foregroundColor: theme.colorScheme.primary,
+                                minimumSize: const Size(double.infinity, 44),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  ChemnorApi().reinitiate();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'ChemNOR Model Reinitiated!',
+                                      ),
+                                      behavior: SnackBarBehavior.floating,
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                },
+                                icon: Icon(Icons.refresh_rounded, size: 18),
+                                label: Text('Reinitiate Model'),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(
+                                    color: theme.colorScheme.primary
+                                        .withOpacity(0.5),
+                                  ),
+                                  foregroundColor: theme.colorScheme.primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  minimumSize: const Size(double.infinity, 44),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
 
-            SizedBox(height: 10),
-
-            // API key input field
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Gemini API Key',
-                border: OutlineInputBorder(),
+                      // Interface Settings Section
+                      _buildSectionTitle(
+                        'Interface',
+                        baseFontSize: baseFontSize,
+                      ),
+                      _buildSettingCard(
+                        baseFontSize: baseFontSize,
+                        title: 'Font Size',
+                        subtitle: 'Adjust app-wide text scaling',
+                        icon: Icons.format_size_rounded,
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  'A',
+                                  style: TextStyle(
+                                    fontSize: baseFontSize - 2.0,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Slider(
+                                    value: _settings.fontSize,
+                                    min: 10.0,
+                                    max: 30.0,
+                                    activeColor: theme.colorScheme.primary,
+                                    onChanged: (double value) =>
+                                        _updateSettings(fontSize: value),
+                                  ),
+                                ),
+                                Text(
+                                  'A',
+                                  style: TextStyle(
+                                    fontSize: baseFontSize + 10.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              '${_settings.fontSize.toStringAsFixed(1)} px',
+                              style: TextStyle(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: baseFontSize,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
               ),
-              controller: TextEditingController(text: _settings.geminiApiKey),
-              textAlign: TextAlign.center, // Center the input text
-              // Update settings when user completes input
-              onSubmitted: (value) => _updateSettings(geminiApiKey: value),
-            ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-            SizedBox(height: 10),
+  Widget _buildSectionTitle(String title, {double baseFontSize = 16.0}) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 12),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.4),
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+          fontSize: baseFontSize - 2.0,
+        ),
+      ),
+    );
+  }
 
-            // Show the currently used API key (custom or default)
-            Text(
-              "the used key is ${_settings.geminiApiKey == '' ? gmnkey : _settings.geminiApiKey}",
-              textAlign: TextAlign.center,
-            ),
+  Widget _buildSettingCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Widget child,
+    double baseFontSize = 16.0,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: theme.colorScheme.primary, size: 20),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: baseFontSize + 2.0,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: baseFontSize - 2.0,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          child,
+        ],
+      ),
+    );
+  }
 
-            /* Commented out save button - was previously used for API key saving
-               Now saving happens on text field submission instead */
-            const SizedBox(height: 10),
-            ElevatedButton.icon(
-              onPressed: () async {
-                // Define the URL explicitly (it seems 'githubUrl' might be undefined)
-                const String Url = "https://aistudio.google.com/app/api-keys";
-
-                /*try {
-                  Uri url = Uri.parse(githubUrl);
-                  // Use external application to open URLs on mobile
-                  if (await canLaunchUrl(url)) {
-                    await launchUrl(
-                      url,
-                      mode: LaunchMode.externalApplication, // Changed from inAppWebView
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Cannot open https://aistudio.google.com/app/api-keys'), backgroundColor: Colors.red));
-                  }
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-                }*/
-                launchUrl(Uri.parse(Url));
-              },
-              icon: const Icon(Icons.link),
-              label: const Text("Get your API key"),
-            ),
-            SizedBox(height: 30),
-
-            // Font size adjustment section
-            Text("Font Size:"),
-            // Slider for font size adjustment
-            Slider(
-              value: _settings.fontSize,
-              min: 10.0,
-              max: 30.0,
-              divisions: 20,
-              label: _settings.fontSize.toStringAsFixed(1),
-              // Update font size when slider changes
-              onChanged: (double value) => _updateSettings(fontSize: value),
-            ),
-
-            SizedBox(height: 20),
-
-            // Commented out sample text that would show current font size
-          ],
+  Widget _buildSocialButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    double baseFontSize = 16.0,
+  }) {
+    return Material(
+      color: Colors.white.withOpacity(0.05),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: Colors.white70),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: baseFontSize - 2.0,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
