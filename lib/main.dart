@@ -38,17 +38,19 @@ void main() async {
   // Open 'historyBox' specifically for storing String messages from chat history
   await Hive.openBox<String>('historyBox');
 
+  // Open 'chatBox' for storing the general chat message history
+  await Hive.openBox('chatBox');
+
   // Get reference to settings box for initial setup and controller
   final settingsBox = await Hive.openBox('settingBox');
 
   // Initialize default model if not set already
   if (!settingsBox.containsKey('selectedModel')) {
-    await settingsBox.put('selectedModel', 'gemini1_5flash');
+    await settingsBox.put('selectedModel', 'gemini3_0flash');
   }
 
   // Create the settings controller with the settings box
   settingsController = SettingsController(settingsBox);
-
   // Launch the app with MyApp as the root widget
   runApp(MyApp());
 }
@@ -76,7 +78,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.dark,
-            
+
             // Custom color scheme for a premium scientific look
             colorScheme: ColorScheme.fromSeed(
               seedColor: const Color(0xFF6366F1), // Indigo primary
@@ -111,9 +113,7 @@ class MyApp extends StatelessWidget {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(
-                  color: Colors.white.withOpacity(0.05),
-                ),
+                borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -133,16 +133,17 @@ class MyApp extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
             ),
 
-            // Text theme refinements
-            textTheme: Theme.of(context).textTheme.apply(
-              fontSizeFactor: settings.fontSize / 16.0,
-              displayColor: Colors.white,
-              bodyColor: const Color(0xFFE2E8F0), // Off-white for readability
-            ),
+            // NOTE: textTheme font scaling is intentionally NOT applied here.
+            // Typography.material2021() has null fontSize on several styles,
+            // which causes a crash when fontSizeFactor != 1.0.
+            // Font size is already applied per-widget via settingsController.value.fontSize.
           ),
 
           // Set the home page to MyHomePage with a title

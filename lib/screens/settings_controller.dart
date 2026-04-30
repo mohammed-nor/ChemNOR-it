@@ -28,15 +28,24 @@ class AppSettings {
   /// Constructor that loads settings from Hive storage
   /// This handles type conversion and provides defaults when values aren't found
   AppSettings.fromHive(Box box)
-    : selectedModel = _stringToGeminiModel(box.get('selectedModel') as String?),
-      fontSize = (box.get('fontSize') as num?)?.toDouble() ?? 16.0,
-      diversity = (box.get('diversity') as num?) ?? 0.5,
-      geminiApiKey = (box.get('geminiapikey') as String?) ?? '';
+      : selectedModel = _stringToGeminiModel(box.get('selectedModel') as String?),
+        fontSize = (box.get('fontSize') as num?)?.toDouble() ?? 16.0,
+        diversity = (box.get('diversity') as num?) ?? 0.5,
+        geminiApiKey = (box.get('geminiApiKey') as String?) ?? '';
 
   /// Helper method to convert string representation to GeminiModel enum
   /// This is needed because Hive can store strings but not enum values directly
   static GeminiModel _stringToGeminiModel(String? modelString) {
-    return GeminiModel.gemini2_5Pro; // Use default model
+    if (modelString == null) return GeminiModel.gemini2_5Pro;
+    try {
+      // Find matching enum value by comparing lowercase string representations
+      return GeminiModel.values.firstWhere(
+        (m) => geminiModelToString(m) == modelString.toLowerCase(),
+        orElse: () => GeminiModel.gemini2_5Pro,
+      );
+    } catch (_) {
+      return GeminiModel.gemini2_5Pro;
+    }
   }
 
   /// Helper method to convert GeminiModel enum to string for storage
@@ -51,7 +60,7 @@ class AppSettings {
     box.put('selectedModel', AppSettings.geminiModelToString(selectedModel));
     box.put('fontSize', fontSize);
     box.put('diversity', diversity);
-    box.put('geminiapikey', geminiApiKey);
+    box.put('geminiApiKey', geminiApiKey);
   }
 }
 
@@ -65,9 +74,8 @@ class SettingsController extends ValueNotifier<AppSettings> {
 
   /// Replace all settings at once
   void update(AppSettings newSettings) {
-    value = newSettings; // Update the value
+    value = newSettings; // Update the value (ValueNotifier auto-notifies listeners)
     value.saveToHive(_box); // Save to storage
-    notifyListeners(); // Notify listeners about the change
   }
 
   /// Update specific settings fields, keeping others unchanged
@@ -86,6 +94,6 @@ class SettingsController extends ValueNotifier<AppSettings> {
       geminiApiKey: geminiApiKey ?? value.geminiApiKey,
     );
     value.saveToHive(_box); // Save to storage
-    notifyListeners(); // Notify listeners about the change
+    // NOTE: No need to call notifyListeners() — ValueNotifier's value= setter does it automatically
   }
 }

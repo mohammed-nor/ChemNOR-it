@@ -67,6 +67,7 @@ class _SearchWidgetState extends State<SearchWidget>
   @override
   void dispose() {
     _fadeController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -84,6 +85,27 @@ class _SearchWidgetState extends State<SearchWidget>
 
   // Error message to display if search fails
   String _errorMessage = '';
+
+  // Strips markdown code fences that Gemini sometimes wraps around JSON
+  String _sanitizeJson(String raw) {
+    // Remove ```json ... ``` or ``` ... ``` wrappers
+    final fenced = RegExp(r'```(?:json)?\s*([\s\S]*?)```', multiLine: true);
+    final match = fenced.firstMatch(raw);
+    if (match != null) return match.group(1)!.trim();
+    return raw.trim();
+  }
+
+  // Safely convert a dynamic list element to Map<String, dynamic>
+  Map<String, dynamic>? _toStringMap(dynamic e) {
+    if (e is Map) {
+      try {
+        return e.map((k, v) => MapEntry(k.toString(), v));
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
 
   // Main search function - performs the API call and processes results
   Future<void> _searchCompounds(String description) async {
@@ -103,76 +125,90 @@ class _SearchWidgetState extends State<SearchWidget>
       setState(() {
         _progress = SearchProgress.fetchingCompounds;
         _progressMessage =
-            'Fetching compound information... \n using ${settingsController.value.selectedModel.apiName} model \n with the key ${settingsController.value.geminiApiKey.isEmpty ? "" : "configured"}';
+            'Fetching compound information...\nUsing ${settingsController.value.selectedModel.apiName} model';
       });
 
       // Step 2: Fetch compound data from API
-      final resultsString = await ApiSrv.findListOfCompoundsJSN(description);
+      final String rawResult;
+      try {
+        rawResult = await ApiSrv.findListOfCompoundsJSN(description);
+      } catch (apiError) {
+        throw Exception('API call failed: $apiError');
+      }
 
       // Handle empty response
-      try {
-        if (resultsString.isEmpty) {
-          throw const FormatException("API returned empty or null response");
-        }
-
-        // Update UI to show processing stage
-        setState(() {
-          _progress = SearchProgress.processingResults;
-          _progressMessage = 'Processing compound data...';
-        });
-      } catch (e) {
-        _progressMessage = 'Error: ${e.toString()}';
+      if (rawResult.isEmpty) {
+        throw const FormatException(
+            'The AI returned an empty response. Check your API key in Settings.');
       }
 
-      // Step 3: Parse JSON response
-      final decodedJson = jsonDecode(resultsString);
+      // Update UI to show processing stage
+      setState(() {
+        _progress = SearchProgress.processingResults;
+        _progressMessage = 'Processing compound data...';
+      });
 
-      // Process response based on its format (handle different response structures)
+      // Step 3: Sanitise then parse JSON response
+      // Gemini sometimes wraps JSON in markdown code fences — strip them first
+      final sanitised = _sanitizeJson(rawResult);
+
+      dynamic decodedJson;
+      try {
+        decodedJson = jsonDecode(sanitised);
+      } on FormatException catch (fe) {
+        throw FormatException(
+            'Could not parse AI response as JSON. '
+            'Raw response (first 200 chars): ${rawResult.substring(0, rawResult.length.clamp(0, 200))}\n'
+            'Parse error: $fe');
+      }
+
+      // Step 4: Process response based on its format
+      List<dynamic>? compoundList;
+
       if (decodedJson is Map<String, dynamic> &&
           decodedJson.containsKey('retrieved_compounds')) {
-        // Format 1: Results in 'retrieved_compounds' field
+        // Format 1: { "retrieved_compounds": [...] }
         final compounds = decodedJson['retrieved_compounds'];
         if (compounds is List) {
-          // Update UI with results
-          setState(() {
-            _compoundsResult = compounds.cast<Map<String, dynamic>>();
-            _progress = SearchProgress.complete;
-            _progressMessage = 'Found ${_compoundsResult.length} compounds';
-          });
+          compoundList = compounds;
         } else {
-          throw const FormatException("retrieved_compounds is not a list");
+          throw const FormatException(
+              '"retrieved_compounds" field is not a list.');
         }
       } else if (decodedJson is List) {
-        // Format 2: Results as direct list
-        setState(() {
-          _compoundsResult = decodedJson.cast<Map<String, dynamic>>();
-          _progress = SearchProgress.complete;
-          _progressMessage = 'Found ${_compoundsResult.length} compounds';
-        });
+        // Format 2: Direct list [...]
+        compoundList = decodedJson;
       } else if (decodedJson is Map<String, dynamic> &&
           decodedJson.containsKey('error')) {
-        // Format 3: Error message in response
-        setState(() {
-          _progress = SearchProgress.error;
-          _errorMessage = 'Error: ${decodedJson['error']}';
-        });
+        // Format 3: { "error": "..." }
+        throw Exception('API error: ${decodedJson['error']}');
       } else {
-        // Unknown format
-        throw const FormatException("API returned an unexpected JSON format");
+        throw FormatException(
+            'Unexpected JSON structure. Got: ${decodedJson.runtimeType}');
       }
+
+      // Safely convert each element — skip any that are not Maps
+      final parsed = compoundList
+          .map(_toStringMap)
+          .whereType<Map<String, dynamic>>()
+          .toList();
+
+      if (parsed.isEmpty) {
+        throw const FormatException(
+            'No valid compound entries found in the response.');
+      }
+
+      setState(() {
+        _compoundsResult = parsed;
+        _progress = SearchProgress.complete;
+        _progressMessage = 'Found ${_compoundsResult.length} compound(s)';
+      });
     } catch (e) {
-      // Handle any exceptions that occur during the search process
-      if (!mounted) {
-        return; // Prevent updating state if widget is no longer in tree
-      }
+      if (!mounted) return;
       setState(() {
         _progress = SearchProgress.error;
-        _errorMessage = 'Error: ${e.toString()}';
+        _errorMessage = e.toString();
       });
-    } finally {
-      // Update loading state when done (success or error)
-      if (!mounted) return;
-      setState(() {});
     }
   }
 
@@ -467,63 +503,102 @@ class _SearchWidgetState extends State<SearchWidget>
                       ),
                       const SizedBox(height: 24),
 
-                      // Progress indicator section - shown during active search
+                      // ── Progress / Error / Results ──────────────────────
+
+                      // Active search progress (not idle, not done, not error)
                       if (_progress != SearchProgress.idle &&
-                          _progress != SearchProgress.complete)
+                          _progress != SearchProgress.complete &&
+                          _progress != SearchProgress.error)
                         Column(
                           children: [
-                            // Progress bar
                             LinearProgressIndicator(
-                              value: _progress == SearchProgress.error
-                                  ? 1.0
-                                  : null,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                _progress == SearchProgress.error
-                                    ? Colors.red
-                                    : Theme.of(context).colorScheme.primary,
+                                Theme.of(context).colorScheme.primary,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            // Progress message
                             Text(
                               _progressMessage,
                               style: TextStyle(
-                                color: _progress == SearchProgress.error
-                                    ? Colors.red
-                                    : Colors.grey[200],
+                                color: Colors.grey[200],
                                 fontStyle: FontStyle.italic,
                               ),
                             ),
-                            // Step indicator with icon (if not in error state)
-                            if (_progress != SearchProgress.error)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      _getProgressIcon(_progress),
-                                      size: 16,
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    _getProgressIcon(_progress),
+                                    size: 16,
+                                    color: Colors.grey[400],
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _getProgressStep(_progress),
+                                    style: TextStyle(
                                       color: Colors.grey[400],
+                                      fontSize: baseFontSize - 2.0,
                                     ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      _getProgressStep(_progress),
-                                      style: TextStyle(
-                                        color: Colors.grey[400],
-                                        fontSize: baseFontSize - 2.0,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
+                            ),
                           ],
                         )
-                      // Error message display
-                      else if (_errorMessage.isNotEmpty)
-                        Text(
-                          _errorMessage,
-                          style: TextStyle(color: Colors.red),
+
+                      // Error card — always visible when progress == error
+                      else if (_progress == SearchProgress.error)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: Colors.red.withOpacity(0.4)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.error_outline_rounded,
+                                      color: Colors.redAccent, size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Search Failed',
+                                    style: TextStyle(
+                                      color: Colors.redAccent,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: baseFontSize,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              SelectableText(
+                                _errorMessage,
+                                style: TextStyle(
+                                  color: Colors.red[200],
+                                  fontSize: baseFontSize - 2,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              TextButton.icon(
+                                onPressed: () => setState(() {
+                                  _progress = SearchProgress.idle;
+                                  _errorMessage = '';
+                                }),
+                                icon: const Icon(Icons.refresh_rounded,
+                                    size: 16),
+                                label: const Text('Dismiss'),
+                                style: TextButton.styleFrom(
+                                    foregroundColor: Colors.redAccent),
+                              ),
+                            ],
+                          ),
                         )
                       // Results display - list of compound cards
                       else if (_compoundsResult.isNotEmpty)

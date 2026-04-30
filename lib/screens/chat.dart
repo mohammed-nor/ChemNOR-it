@@ -577,8 +577,75 @@ class _ChatPageState extends State<ChatPage>
     );
     _fadeController.forward();
 
-    // Send welcome message when chat is opened
-    _sendWelcomeMessage();
+    // Load messages from disk or send welcome message if none exist
+    _loadMessages();
+  }
+
+  /// Load messages from Hive box
+  void _loadMessages() {
+    final box = Hive.box('chatBox');
+    final savedMessages = box.get('history', defaultValue: []) as List;
+
+    if (savedMessages.isEmpty) {
+      _sendWelcomeMessage();
+    } else {
+      setState(() {
+        for (final msg in savedMessages) {
+          final data = Map<String, dynamic>.from(msg as Map);
+          _chatMessages.add((
+            image: null,
+            text: data['text'] as String?,
+            fromUser: data['fromUser'] as bool,
+          ));
+        }
+      });
+
+      // Scroll to bottom after loading
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        }
+      });
+    }
+  }
+
+  /// Save messages to Hive box
+  void _saveMessages() {
+    final box = Hive.box('chatBox');
+    final dataToSave = _chatMessages
+        .map((msg) => {'text': msg.text, 'fromUser': msg.fromUser})
+        .toList();
+    box.put('history', dataToSave);
+  }
+
+  /// Clear the chat history
+  Future<void> _clearChat() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Conversation?'),
+        content: const Text('This will delete all messages in this chat.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() {
+        _chatMessages.clear();
+      });
+      _saveMessages();
+      _sendWelcomeMessage();
+    }
   }
 
   @override
@@ -622,6 +689,7 @@ class _ChatPageState extends State<ChatPage>
         _chatMessages.add((image: null, text: response, fromUser: false));
         _loading = false; // Hide loading indicator
       });
+      _saveMessages();
     } catch (e) {
       // Handle errors
       if (mounted) {
@@ -641,6 +709,7 @@ class _ChatPageState extends State<ChatPage>
       _loading = true;
       _chatMessages.add((image: null, text: message, fromUser: true));
     });
+    _saveMessages();
 
     _textController.clear();
     _textFieldFocus.requestFocus();
@@ -674,6 +743,7 @@ class _ChatPageState extends State<ChatPage>
         _chatMessages.add((image: null, text: response, fromUser: false));
         _loading = false;
       });
+      _saveMessages();
 
       // Scroll to bottom after a short delay
       await Future.delayed(const Duration(milliseconds: 100));
@@ -687,72 +757,6 @@ class _ChatPageState extends State<ChatPage>
       setState(() {
         _loading = false;
       });
-    }
-  }
-
-  Future<void> _useChemistFunction() async {
-    // Show dialog to get CID input
-    final TextEditingController cidController = TextEditingController();
-    final String? cid = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Chemical Application'),
-        content: TextField(
-          decoration: const InputDecoration(
-            hintText: 'Enter the chemical application you desired',
-          ),
-          controller: cidController,
-          //keyboardType: TextInputType.number,
-          onSubmitted: (value) => Navigator.of(context).pop(value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(cidController.text),
-            child: Text('Submit'),
-          ),
-        ],
-      ),
-    );
-
-    if (cid != null && cid.isNotEmpty) {
-      setState(() {
-        _loading = true;
-        _chatMessages.add((
-          image: null,
-          text: "Brainstorming on: $cid...",
-          fromUser: false,
-        ));
-      });
-
-      try {
-        final result = await apiService.chemist(cid);
-
-        setState(() {
-          _chatMessages.add((
-            image: null,
-            text: "Chemical analysis result:\n$result",
-            fromUser: false,
-          ));
-          _loading = false;
-        });
-
-        // Scroll to bottom
-        await Future.delayed(const Duration(milliseconds: 100));
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      } catch (e) {
-        apiService.showError(context, e.toString());
-        setState(() {
-          _loading = false;
-        });
-      }
     }
   }
 
@@ -812,6 +816,44 @@ class _ChatPageState extends State<ChatPage>
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'ChemNOR ',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontSize: baseFontSize + 6.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'it! ',
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.redAccent,
+                                  fontSize: baseFontSize + 5.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'Chat',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: baseFontSize + 5.0,
+                                  fontWeight: FontWeight.w300,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -820,35 +862,11 @@ class _ChatPageState extends State<ChatPage>
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: 'ChemNOR ',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontSize: baseFontSize + 4.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'it! ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.redAccent,
-                                fontSize: baseFontSize,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'Chat\n',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: baseFontSize,
-                                fontWeight: FontWeight.w300,
-                              ),
-                            ),
-                            TextSpan(
                               text: 'C',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
+                                fontSize: baseFontSize - 5.0,
                               ),
                             ),
                             TextSpan(
@@ -856,7 +874,7 @@ class _ChatPageState extends State<ChatPage>
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
                                 color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
+                                fontSize: baseFontSize - 5.0,
                               ),
                             ),
                             TextSpan(
@@ -864,7 +882,7 @@ class _ChatPageState extends State<ChatPage>
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
+                                fontSize: baseFontSize - 5.0,
                               ),
                             ),
                             TextSpan(
@@ -872,7 +890,7 @@ class _ChatPageState extends State<ChatPage>
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
                                 color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
+                                fontSize: baseFontSize - 5.0,
                               ),
                             ),
                             TextSpan(
@@ -880,7 +898,7 @@ class _ChatPageState extends State<ChatPage>
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
+                                fontSize: baseFontSize - 5.0,
                               ),
                             ),
                             TextSpan(
@@ -888,7 +906,7 @@ class _ChatPageState extends State<ChatPage>
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
                                 color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
+                                fontSize: baseFontSize - 5.0,
                               ),
                             ),
                             TextSpan(
@@ -896,7 +914,7 @@ class _ChatPageState extends State<ChatPage>
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
+                                fontSize: baseFontSize - 5.0,
                               ),
                             ),
                             TextSpan(
@@ -904,7 +922,7 @@ class _ChatPageState extends State<ChatPage>
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
                                 color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
+                                fontSize: baseFontSize - 5.0,
                               ),
                             ),
                             TextSpan(
@@ -912,7 +930,7 @@ class _ChatPageState extends State<ChatPage>
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
+                                fontSize: baseFontSize - 5.0,
                               ),
                             ),
                             TextSpan(
@@ -920,7 +938,7 @@ class _ChatPageState extends State<ChatPage>
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
                                 color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
+                                fontSize: baseFontSize - 5.0,
                               ),
                             ),
                             TextSpan(
@@ -928,7 +946,7 @@ class _ChatPageState extends State<ChatPage>
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
+                                fontSize: baseFontSize - 5.0,
                               ),
                             ),
                             TextSpan(
@@ -936,7 +954,7 @@ class _ChatPageState extends State<ChatPage>
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
                                 color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
+                                fontSize: baseFontSize - 5.0,
                               ),
                             ),
                             TextSpan(
@@ -944,7 +962,7 @@ class _ChatPageState extends State<ChatPage>
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
+                                fontSize: baseFontSize - 5.0,
                               ),
                             ),
                             TextSpan(
@@ -952,16 +970,15 @@ class _ChatPageState extends State<ChatPage>
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
                                 color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
+                                fontSize: baseFontSize - 5.0,
                               ),
                             ),
                           ],
                         ),
-                      ),
-
-                      const SizedBox(height: 20),
+                      ), // Space for header
                     ],
                   ),
+                  const SizedBox(height: 8),
                   Expanded(
                     child: ListView.builder(
                       controller: _scrollController,
@@ -985,9 +1002,13 @@ class _ChatPageState extends State<ChatPage>
                   Row(
                     children: [
                       IconButton.filledTonal(
-                        onPressed: !_loading ? _useChemistFunction : null,
-                        icon: Icon(Icons.science_rounded),
-                        tooltip: 'Chemist Function',
+                        onPressed: _clearChat,
+                        icon: Icon(Icons.refresh_rounded),
+                        tooltip: 'Reinitialize Chat',
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.redAccent.withOpacity(0.1),
+                          foregroundColor: Colors.redAccent,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -1036,7 +1057,7 @@ class MessageBubble extends StatelessWidget {
       alignment: isFromUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width,
+          maxWidth: MediaQuery.of(context).size.width * 0.8,
         ),
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
         padding: const EdgeInsets.all(6),

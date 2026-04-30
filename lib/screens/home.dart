@@ -55,8 +55,11 @@ class _MyHomePageState extends State<MyHomePage> {
   // Build the UI for the home page
   Widget build(BuildContext context) {
     return Scaffold(
-      // Main content area - shows the currently selected page
-      body: pages[_bottomNavIndex],
+      // Main content area - using IndexedStack to maintain page state when switching tabs
+      body: IndexedStack(
+        index: _bottomNavIndex,
+        children: pages,
+      ),
 
       // Bottom navigation bar for switching between screens
       bottomNavigationBar: NavigationBar(

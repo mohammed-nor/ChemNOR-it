@@ -36,16 +36,14 @@ class _SettingsPageState extends State<SettingPage>
   late Animation<double> _fadeAnimation;
   // Store current app settings
   late AppSettings _settings;
+  // Controller for the API key text field - must be state-level to avoid accessibility tree desync
+  late TextEditingController _apiKeyController;
 
-  // Define available LLM models as a list
-  // This shows all available Gemini models that the app can use
-  final List<GeminiModel> llmModels = [
-    GeminiModel.gemini2_5FlashLite,
-    GeminiModel.gemini3_0Flash,
-    GeminiModel.gemini3_0Pro,
-    GeminiModel.gemini2_5Pro,
-    GeminiModel.gemini2_5Flash,
-  ];
+  // Define available LLM models from the chem_nor package, filtering out duplicates
+  final List<GeminiModel> llmModels = () {
+    final seen = <String>{};
+    return GeminiModel.values.where((model) => seen.add(model.apiName)).toList();
+  }();
 
   @override
   // Initialize state when widget is created
@@ -64,6 +62,9 @@ class _SettingsPageState extends State<SettingPage>
     // Get current settings from the controller
     _settings = settingsController.value;
 
+    // Initialize the API key controller once with the current value
+    _apiKeyController = TextEditingController(text: _settings.geminiApiKey);
+
     // Safety check: if selected model isn't in our list, use a default
     if (!llmModels.contains(_settings.selectedModel)) {
       _updateSettings(selectedModel: llmModels[1]); // Default to second model
@@ -73,6 +74,7 @@ class _SettingsPageState extends State<SettingPage>
   @override
   void dispose() {
     _fadeController.dispose();
+    _apiKeyController.dispose();
     super.dispose();
   }
 
@@ -91,21 +93,6 @@ class _SettingsPageState extends State<SettingPage>
       diversity: diversity,
       geminiApiKey: geminiApiKey,
     );
-
-    // Persist changes to Hive
-    final box = Hive.box('settingBox');
-    if (selectedModel != null) {
-      box.put('selectedModel', AppSettings.geminiModelToString(selectedModel));
-    }
-    if (geminiApiKey != null) {
-      box.put('geminiApiKey', geminiApiKey);
-    }
-    if (fontSize != null) {
-      box.put('fontSize', fontSize);
-    }
-    if (diversity != null) {
-      box.put('diversity', diversity);
-    }
 
     // Update local state to reflect changes
     setState(() {
@@ -298,6 +285,7 @@ class _SettingsPageState extends State<SettingPage>
                         icon: Icons.psychology_rounded,
                         child: DropdownButtonHideUnderline(
                           child: Container(
+                            width: double.infinity,
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.05),
@@ -311,7 +299,7 @@ class _SettingsPageState extends State<SettingPage>
                                 return DropdownMenuItem<GeminiModel>(
                                   value: model,
                                   child: Text(
-                                    model.name,
+                                    _formatModelName(model.name),
                                     style: TextStyle(fontSize: baseFontSize),
                                   ),
                                 );
@@ -319,10 +307,6 @@ class _SettingsPageState extends State<SettingPage>
                               onChanged: (GeminiModel? newValue) {
                                 if (newValue != null) {
                                   _updateSettings(selectedModel: newValue);
-                                  Hive.box('settingBox').put(
-                                    'selectedModel',
-                                    AppSettings.geminiModelToString(newValue),
-                                  );
                                 }
                               },
                             ),
@@ -349,9 +333,7 @@ class _SettingsPageState extends State<SettingPage>
                                       )
                                     : null,
                               ),
-                              controller: TextEditingController(
-                                text: _settings.geminiApiKey,
-                              ),
+                              controller: _apiKeyController,
                               style: TextStyle(fontSize: baseFontSize),
                               onSubmitted: (value) =>
                                   _updateSettings(geminiApiKey: value),
@@ -467,6 +449,34 @@ class _SettingsPageState extends State<SettingPage>
         ],
       ),
     );
+  }
+
+  /// Formats the enum model name into a human-readable string
+  /// Example: 'gemini2_0Flash' -> 'Gemini 2.0 Flash'
+  String _formatModelName(String name) {
+    // 1. Handle the 'gemini' prefix
+    String formatted = name.replaceFirst('gemini', 'Gemini ');
+
+    // 2. Replace underscores with dots (for versions like 2_0)
+    formatted = formatted.replaceAll('_', '.');
+
+    // 3. Add space before capital letters (e.g., Flash, Pro, Lite)
+    formatted = formatted.replaceAllMapped(
+      RegExp(r'([a-z0-9])([A-Z])'),
+      (Match m) => '${m[1]} ${m[2]}',
+    );
+
+    // 4. Handle edge cases like 'Flashlite' (lowercase 'l')
+    if (formatted.endsWith('lite') && !formatted.endsWith(' Lite')) {
+      formatted = formatted.replaceFirst('lite', ' Lite');
+    }
+
+    // 5. Handle 'live' in 'Flashlive'
+    if (formatted.endsWith('live') && !formatted.endsWith(' Live')) {
+      formatted = formatted.replaceFirst('live', ' Live');
+    }
+
+    return formatted.trim();
   }
 
   Widget _buildSectionTitle(String title, {double baseFontSize = 16.0}) {
