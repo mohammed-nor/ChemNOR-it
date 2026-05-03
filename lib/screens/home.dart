@@ -39,13 +39,8 @@ class _MyHomePageState extends State<MyHomePage> {
   // Track which tab is currently selected (0 = Search by default)
   int _bottomNavIndex = 0;
 
-  // List of all screens - late so they are created once after initState
-  late final List<Widget> pages = <Widget>[
-    SearchWidget(), // Index 0: Search screen
-    ChatPage(), // Index 1: Chat screen
-    HistoryWidget(), // Index 2: History screen
-    SettingPage(), // Index 3: Settings screen
-  ];
+  // We remove the cached 'pages' list to ensure all widgets are recreated 
+  // and pick up the latest settings (font size, etc.) when the app rebuilds.
 
   @override
   void initState() {
@@ -85,6 +80,14 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   // Build the UI for the home page
   Widget build(BuildContext context) {
+    // Generate the list of pages here so they pick up fresh settings on every build
+    final pages = [
+      SearchWidget(), // Index 0: Search screen
+      ChatPage(), // Index 1: Chat screen
+      HistoryWidget(), // Index 2: History screen
+      SettingPage(), // Index 3: Settings screen
+    ];
+
     return Scaffold(
       // Main content area - using IndexedStack to maintain page state
       body: IndexedStack(index: _bottomNavIndex, children: pages),
@@ -148,6 +151,7 @@ class _ApiKeyGuideSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final baseFontSize = settingsController.value.fontSize;
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xFF0F172A),
@@ -194,12 +198,12 @@ class _ApiKeyGuideSheet extends StatelessWidget {
           const SizedBox(height: 20),
 
           // Title
-          const Text(
+          Text(
             'One Step Before You Start',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 20,
+              fontSize: baseFontSize + 4.0,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -213,7 +217,7 @@ class _ApiKeyGuideSheet extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white.withOpacity(0.65),
-              fontSize: 14,
+              fontSize: baseFontSize - 2.0,
               height: 1.6,
             ),
           ),
@@ -250,8 +254,11 @@ class _ApiKeyGuideSheet extends StatelessWidget {
                 Uri.parse('https://aistudio.google.com/app/api-keys'),
                 mode: LaunchMode.externalApplication,
               ),
-              icon: const Icon(Icons.open_in_new_rounded, size: 18),
-              label: const Text('Get My Free API Key'),
+              icon: Icon(Icons.open_in_new_rounded, size: baseFontSize + 2),
+              label: Text(
+                'Get My Free API Key',
+                style: TextStyle(fontSize: baseFontSize - 2),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6366F1),
                 foregroundColor: Colors.white,
@@ -269,8 +276,11 @@ class _ApiKeyGuideSheet extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: onGoToSettings,
-              icon: const Icon(Icons.settings_rounded, size: 18),
-              label: const Text('Go to Settings'),
+              icon: Icon(Icons.settings_rounded, size: baseFontSize + 2),
+              label: Text(
+                'Go to Settings',
+                style: TextStyle(fontSize: baseFontSize - 2),
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white70,
                 side: BorderSide(color: Colors.white.withOpacity(0.15)),
@@ -288,7 +298,10 @@ class _ApiKeyGuideSheet extends StatelessWidget {
             onPressed: onDismissForever,
             child: Text(
               'I already have a key',
-              style: TextStyle(color: Colors.white.withOpacity(0.35)),
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.35),
+                fontSize: baseFontSize - 3,
+              ),
             ),
           ),
         ],
@@ -302,13 +315,14 @@ class _ApiKeyGuideSheet extends StatelessWidget {
     required String subtitle,
     required IconData icon,
   }) {
+    final baseFontSize = settingsController.value.fontSize;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Numbered circle
         Container(
-          width: 28,
-          height: 28,
+          width: baseFontSize * 1.75,
+          height: baseFontSize * 1.75,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: const Color(0xFF6366F1).withOpacity(0.15),
@@ -317,9 +331,9 @@ class _ApiKeyGuideSheet extends StatelessWidget {
           child: Center(
             child: Text(
               number,
-              style: const TextStyle(
-                color: Color(0xFF818CF8),
-                fontSize: 13,
+              style: TextStyle(
+                color: const Color(0xFF818CF8),
+                fontSize: baseFontSize - 3.0,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -330,7 +344,11 @@ class _ApiKeyGuideSheet extends StatelessWidget {
         // Step icon
         Padding(
           padding: const EdgeInsets.only(top: 4),
-          child: Icon(icon, size: 16, color: Colors.white.withOpacity(0.35)),
+          child: Icon(
+            icon,
+            size: baseFontSize,
+            color: Colors.white.withOpacity(0.35),
+          ),
         ),
         const SizedBox(width: 10),
 
@@ -341,9 +359,9 @@ class _ApiKeyGuideSheet extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
-                  fontSize: 14,
+                  fontSize: baseFontSize - 2.0,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -352,7 +370,7 @@ class _ApiKeyGuideSheet extends StatelessWidget {
                 subtitle,
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.4),
-                  fontSize: 12,
+                  fontSize: baseFontSize - 4.0,
                   height: 1.4,
                 ),
               ),

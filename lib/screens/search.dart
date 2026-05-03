@@ -11,12 +11,13 @@ import 'package:chemnor_it/main.dart'; // Main app configuration
 import 'dart:convert'; // For JSON processing
 import 'package:flutter/material.dart'; // Flutter UI components
 import 'package:hive/hive.dart';
+import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:url_launcher/url_launcher.dart'; // For launching URLs
 import 'package:http/http.dart' as http; // HTTP requests
 
 // Import local files
 import '../screens/chat.dart'; // For navigation to chat screen
-import '../services/ChemnorApi.dart'; // Add this import
+import '../services/chemnor_api.dart'; // Add this import
 
 // Enum defining the possible states of the search process
 enum SearchProgress {
@@ -43,7 +44,7 @@ class _SearchWidgetState extends State<SearchWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-  final ApiSrv = ChemnorApi();
+  final apiSrv = ChemnorApi();
 
   // Track the current search progress state
   SearchProgress _progress = SearchProgress.idle;
@@ -135,6 +136,7 @@ class _SearchWidgetState extends State<SearchWidget>
 
   /// Show the saved compounds bottom sheet
   void _showSavedSheet() {
+    final baseFontSize = settingsController.value.fontSize;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -158,7 +160,7 @@ class _SearchWidgetState extends State<SearchWidget>
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -175,9 +177,9 @@ class _SearchWidgetState extends State<SearchWidget>
                       const SizedBox(width: 10),
                       Text(
                         'Saved Compounds (${_savedCompounds.length})',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
-                          fontSize: 17,
+                          fontSize: baseFontSize + 1.0,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -187,20 +189,24 @@ class _SearchWidgetState extends State<SearchWidget>
                 const Divider(color: Colors.white12),
                 // List
                 if (_savedCompounds.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(40),
+                  Padding(
+                    padding: const EdgeInsets.all(40),
                     child: Column(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.bookmark_border_rounded,
                           color: Colors.white24,
                           size: 48,
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Text(
                           'No saved compounds yet.\nTap the bookmark on any result to save it.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.white38, height: 1.6),
+                          style: TextStyle(
+                            color: Colors.white38,
+                            height: 1.6,
+                            fontSize: baseFontSize - 2.0,
+                          ),
                         ),
                       ],
                     ),
@@ -215,7 +221,7 @@ class _SearchWidgetState extends State<SearchWidget>
                         final c = _savedCompounds[i];
                         final cid = c['cid']?.toString();
                         return Material(
-                          color: Colors.white.withOpacity(0.04),
+                          color: Colors.white.withValues(alpha: 0.04),
                           borderRadius: BorderRadius.circular(16),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(16),
@@ -264,20 +270,20 @@ class _SearchWidgetState extends State<SearchWidget>
                                       children: [
                                         Text(
                                           c['name'] ?? 'Unknown',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.w600,
-                                            fontSize: 14,
+                                            fontSize: baseFontSize - 2.0,
                                           ),
                                         ),
                                         if (cid != null)
                                           Text(
                                             'CID: $cid',
                                             style: TextStyle(
-                                              color: Colors.white.withOpacity(
-                                                0.4,
+                                              color: Colors.white.withValues(
+                                                alpha: 0.4,
                                               ),
-                                              fontSize: 12,
+                                              fontSize: baseFontSize - 4.0,
                                             ),
                                           ),
                                       ],
@@ -338,28 +344,32 @@ class _SearchWidgetState extends State<SearchWidget>
   // Main search function - performs the API call and processes results
   Future<void> _searchCompounds(String description) async {
     // Update UI to show loading state and reset previous results
-    setState(() {
-      _errorMessage = '';
-      _compoundsResult = [];
-      _progress = SearchProgress.processingPrompt;
-      _progressMessage = 'Processing your search query...';
-    });
+    if (mounted) {
+      setState(() {
+        _errorMessage = '';
+        _compoundsResult = [];
+        _progress = SearchProgress.processingPrompt;
+        _progressMessage = 'Processing your search query...';
+      });
+    }
 
     try {
       // Step 1: Processing prompt - add a small delay for visual feedback
       await Future.delayed(const Duration(milliseconds: 500));
 
       // Update UI to show next stage
-      setState(() {
-        _progress = SearchProgress.fetchingCompounds;
-        _progressMessage =
-            'Fetching compound information...\nUsing ${settingsController.value.selectedModel.apiName} model';
-      });
+      if (mounted) {
+        setState(() {
+          _progress = SearchProgress.fetchingCompounds;
+          _progressMessage =
+              'Fetching compound information...\nUsing ${settingsController.value.selectedModel.apiName} model';
+        });
+      }
 
       // Step 2: Fetch compound data from API
       final String rawResult;
       try {
-        rawResult = await ApiSrv.findListOfCompoundsJSN(description);
+        rawResult = await apiSrv.findListOfCompoundsJSN(description);
       } catch (apiError) {
         throw Exception('API call failed: $apiError');
       }
@@ -372,10 +382,12 @@ class _SearchWidgetState extends State<SearchWidget>
       }
 
       // Update UI to show processing stage
-      setState(() {
-        _progress = SearchProgress.processingResults;
-        _progressMessage = 'Processing compound data...';
-      });
+      if (mounted) {
+        setState(() {
+          _progress = SearchProgress.processingResults;
+          _progressMessage = 'Processing compound data...';
+        });
+      }
 
       // Step 3: Sanitise then parse JSON response
       // Gemini sometimes wraps JSON in markdown code fences — strip them first
@@ -431,17 +443,21 @@ class _SearchWidgetState extends State<SearchWidget>
         );
       }
 
-      setState(() {
-        _compoundsResult = parsed;
-        _progress = SearchProgress.complete;
-        _progressMessage = 'Found ${_compoundsResult.length} compound(s)';
-      });
+      if (mounted) {
+        setState(() {
+          _compoundsResult = parsed;
+          _progress = SearchProgress.complete;
+          _progressMessage = 'Found ${_compoundsResult.length} compound(s)';
+        });
+      }
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _progress = SearchProgress.error;
-        _errorMessage = e.toString();
-      });
+      if (mounted) {
+        setState(() {
+          _progress = SearchProgress.error;
+          _errorMessage = e.toString();
+        });
+      }
     }
   }
 
@@ -458,12 +474,15 @@ class _SearchWidgetState extends State<SearchWidget>
       if (response.statusCode == 200) {
         // Parse response to count publications
         final data = jsonDecode(response.body);
-        final pubmedIds =
-            data['InformationList']['Information'][0]['PubMedID'] as List?;
+        final infoList = data['InformationList'];
+        if (infoList == null) return '0';
+        final information = infoList['Information'];
+        if (information == null || (information as List).isEmpty) return '0';
+        final pubmedIds = information[0]['PubMedID'] as List?;
         return pubmedIds?.length.toString() ?? '0';
       }
     } catch (e) {
-      print('Error fetching publication count: $e');
+      // Silent catch or use proper logging
     }
     return 'N/A'; // Default value if fetch fails
   }
@@ -497,8 +516,8 @@ class _SearchWidgetState extends State<SearchWidget>
   }
 
   @override
-  // Build the UI for the search widget
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final baseFontSize = settingsController.value.fontSize;
     // Get user preferences from settings controller
     final fontSize = settingsController.value.fontSize;
@@ -530,7 +549,7 @@ class _SearchWidgetState extends State<SearchWidget>
                       height: 400,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF6366F1).withOpacity(0.08),
+                        color: const Color(0xFF6366F1).withValues(alpha: 0.08),
                       ),
                     ),
                   ),
@@ -542,7 +561,7 @@ class _SearchWidgetState extends State<SearchWidget>
                       height: 500,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF4F46E5).withOpacity(0.05),
+                        color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
                       ),
                     ),
                   ),
@@ -553,6 +572,7 @@ class _SearchWidgetState extends State<SearchWidget>
 
           // Main Content
           CustomScrollView(
+            physics: const ClampingScrollPhysics(),
             slivers: [
               SliverAppBar(
                 expandedHeight: 100,
@@ -605,6 +625,7 @@ class _SearchWidgetState extends State<SearchWidget>
                   ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
+                  expandedTitleScale: 1.0,
                   centerTitle: true,
                   title: RichText(
                     textAlign: TextAlign.center,
@@ -759,11 +780,25 @@ class _SearchWidgetState extends State<SearchWidget>
                       // Search text field
                       TextField(
                         controller: _searchController,
+                        style: TextStyle(
+                          fontSize: baseFontSize,
+                          color: Colors.white,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Describe compound properties...',
-                          prefixIcon: Icon(Icons.search_rounded),
+                          hintStyle: TextStyle(
+                            fontSize: baseFontSize,
+                            color: Colors.white54,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search_rounded,
+                            size: baseFontSize + 4,
+                          ),
                           suffixIcon: IconButton(
-                            icon: Icon(Icons.auto_awesome_rounded),
+                            icon: Icon(
+                              Icons.auto_awesome_rounded,
+                              size: baseFontSize + 2,
+                            ),
                             onPressed: () {
                               if (_searchController.text.isNotEmpty) {
                                 _searchCompounds(_searchController.text);
@@ -789,10 +824,10 @@ class _SearchWidgetState extends State<SearchWidget>
                               vertical: 12,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.amber.withOpacity(0.08),
+                              color: Colors.amber.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: Colors.amber.withOpacity(0.35),
+                                color: Colors.amber.withValues(alpha: 0.35),
                               ),
                             ),
                             child: Row(
@@ -808,7 +843,9 @@ class _SearchWidgetState extends State<SearchWidget>
                                     'No API key configured. '
                                     'Get a free key from Google AI Studio to use ChemNOR.',
                                     style: TextStyle(
-                                      color: Colors.amber.withOpacity(0.85),
+                                      color: Colors.amber.withValues(
+                                        alpha: 0.85,
+                                      ),
                                       fontSize: fontSize - 2,
                                       height: 1.4,
                                     ),
@@ -828,17 +865,21 @@ class _SearchWidgetState extends State<SearchWidget>
                                       vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.amber.withOpacity(0.15),
+                                      color: Colors.amber.withValues(
+                                        alpha: 0.15,
+                                      ),
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
-                                        color: Colors.amber.withOpacity(0.4),
+                                        color: Colors.amber.withValues(
+                                          alpha: 0.4,
+                                        ),
                                       ),
                                     ),
-                                    child: const Text(
+                                    child: Text(
                                       'Get Key',
                                       style: TextStyle(
                                         color: Colors.amber,
-                                        fontSize: 12,
+                                        fontSize: baseFontSize - 5,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -900,10 +941,10 @@ class _SearchWidgetState extends State<SearchWidget>
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.08),
+                            color: Colors.red.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: Colors.red.withOpacity(0.4),
+                              color: Colors.red.withValues(alpha: 0.4),
                             ),
                           ),
                           child: Column(
@@ -956,8 +997,8 @@ class _SearchWidgetState extends State<SearchWidget>
                       // Results display - list of compound cards
                       else if (_compoundsResult.isNotEmpty)
                         ListView.builder(
-                          shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
                           itemCount: _compoundsResult.length,
                           itemBuilder: (context, index) {
                             final compound = _compoundsResult[index];
@@ -972,7 +1013,7 @@ class _SearchWidgetState extends State<SearchWidget>
                                 borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
+                                    color: Colors.black.withValues(alpha: 0.2),
                                     blurRadius: 15,
                                     offset: const Offset(0, 8),
                                   ),
@@ -1044,13 +1085,34 @@ class _SearchWidgetState extends State<SearchWidget>
                                                     ),
                                                   ),
                                                   const SizedBox(height: 4),
-                                                  Text(
-                                                    'ID: ${compound['cid'] ?? 'N/A'}',
-                                                    style: TextStyle(
-                                                      color: Colors.white
-                                                          .withOpacity(0.5),
-                                                      fontSize:
-                                                          baseFontSize - 2.0,
+                                                  Theme(
+                                                    data: theme.copyWith(
+                                                      textTheme: theme.textTheme
+                                                          .copyWith(
+                                                            headlineSmall:
+                                                                TextStyle(
+                                                                  fontSize:
+                                                                      baseFontSize +
+                                                                      2,
+                                                                ),
+                                                            titleLarge: TextStyle(
+                                                              fontSize:
+                                                                  baseFontSize +
+                                                                  1,
+                                                            ),
+                                                            titleMedium: TextStyle(
+                                                              fontSize:
+                                                                  baseFontSize,
+                                                            ),
+                                                          ),
+                                                    ),
+                                                    child: GptMarkdown(
+                                                      'ID: ${compound['cid'] ?? 'N/A'}',
+                                                      style: TextStyle(
+                                                        fontSize:
+                                                            baseFontSize - 2.0,
+                                                        color: Colors.white,
+                                                      ),
                                                     ),
                                                   ),
                                                   const SizedBox(height: 8),
@@ -1066,17 +1128,23 @@ class _SearchWidgetState extends State<SearchWidget>
                                                               vertical: 4,
                                                             ),
                                                         decoration: BoxDecoration(
-                                                          color: const Color(
-                                                            0xFF6366F1,
-                                                          ).withOpacity(0.1),
+                                                          color:
+                                                              const Color(
+                                                                0xFF6366F1,
+                                                              ).withValues(
+                                                                alpha: 0.1,
+                                                              ),
                                                           borderRadius:
                                                               BorderRadius.circular(
                                                                 8,
                                                               ),
                                                           border: Border.all(
-                                                            color: const Color(
-                                                              0xFF6366F1,
-                                                            ).withOpacity(0.3),
+                                                            color:
+                                                                const Color(
+                                                                  0xFF6366F1,
+                                                                ).withValues(
+                                                                  alpha: 0.3,
+                                                                ),
                                                           ),
                                                         ),
                                                         child: Row(
@@ -1087,9 +1155,10 @@ class _SearchWidgetState extends State<SearchWidget>
                                                               Icons
                                                                   .article_outlined,
                                                               size: 14,
-                                                              color: Color(
-                                                                0xFF6366F1,
-                                                              ),
+                                                              color:
+                                                                  const Color(
+                                                                    0xFF6366F1,
+                                                                  ),
                                                             ),
                                                             const SizedBox(
                                                               width: 4,
@@ -1100,9 +1169,10 @@ class _SearchWidgetState extends State<SearchWidget>
                                                                 fontSize:
                                                                     baseFontSize -
                                                                     3.0,
-                                                                color: Color(
-                                                                  0xFF818CF8,
-                                                                ),
+                                                                color:
+                                                                    const Color(
+                                                                      0xFF818CF8,
+                                                                    ),
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .w600,
@@ -1138,7 +1208,9 @@ class _SearchWidgetState extends State<SearchWidget>
                                                       ),
                                                   decoration: BoxDecoration(
                                                     color: Colors.white
-                                                        .withOpacity(0.05),
+                                                        .withValues(
+                                                          alpha: 0.05,
+                                                        ),
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                           10,
@@ -1201,8 +1273,8 @@ class _SearchWidgetState extends State<SearchWidget>
                                                 backgroundColor:
                                                     _isSaved(compound)
                                                     ? const Color(0xFF6366F1)
-                                                    : Colors.white.withOpacity(
-                                                        0.07,
+                                                    : Colors.white.withValues(
+                                                        alpha: 0.07,
                                                       ),
                                               ),
                                               icon: Icon(

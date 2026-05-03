@@ -14,7 +14,7 @@ import 'package:chemnor_it/main.dart'; // Flutter UI components
 // For clipboard functionality
 import 'package:gpt_markdown/gpt_markdown.dart'; // For markdown rendering
 import 'package:hive/hive.dart'; // Local storage
-import '../services/ChemnorApi.dart'; // API service for AI interaction
+import '../services/chemnor_api.dart'; // API service for AI interaction
 // App settings
 
 /// Compound-specific chat widget that can be initialized with compound data
@@ -26,8 +26,7 @@ class ChatWidget extends StatefulWidget {
   const ChatWidget({super.key, this.compoundData});
 
   @override
-  // Create state for this widget
-  _ChatWidgetState createState() => _ChatWidgetState();
+  State<ChatWidget> createState() => _ChatWidgetState();
 }
 
 /// State class for the compound-specific chat widget
@@ -52,7 +51,7 @@ class _ChatWidgetState extends State<ChatWidget>
   bool _loading = false;
 
   // API service for communication with backend
-  ChemnorApi ApiSrv = ChemnorApi();
+  final ChemnorApi apiSrv = ChemnorApi();
 
   @override
   // Initialize state when widget is created
@@ -129,7 +128,7 @@ class _ChatWidgetState extends State<ChatWidget>
       _generatedContent.add((image: null, text: message, fromUser: false));
 
       // Fetch response from API
-      final response = await ApiSrv.fetchResponse(contextText);
+      final response = await apiSrv.fetchResponse(contextText);
 
       // Process response text
       final text = processAIText(response);
@@ -140,13 +139,15 @@ class _ChatWidgetState extends State<ChatWidget>
       }
 
       // Update UI state
-      setState(() {
-        _loading = false; // Hide loading indicator
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false; // Hide loading indicator
+        });
+      }
     } catch (e) {
       // Handle errors
       if (mounted) {
-        ApiSrv.showError(context, e.toString());
+        apiSrv.showError(context, e.toString());
         setState(() {
           _loading = false; // Hide loading indicator
         });
@@ -160,6 +161,7 @@ class _ChatWidgetState extends State<ChatWidget>
     final textFieldDecoration = InputDecoration(
       contentPadding: const EdgeInsets.all(15),
       hintText: 'Enter a prompt...',
+      hintStyle: TextStyle(fontSize: baseFontSize, color: Colors.white54),
       border: OutlineInputBorder(
         borderRadius: const BorderRadius.all(Radius.circular(14)),
         borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary),
@@ -185,14 +187,26 @@ class _ChatWidgetState extends State<ChatWidget>
             child: Stack(
               children: [
                 Positioned(
-                  top: 100,
+                  top: -100,
                   right: -100,
                   child: Container(
                     width: 400,
                     height: 400,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF6366F1).withOpacity(0.06),
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: -150,
+                  left: -150,
+                  child: Container(
+                    width: 500,
+                    height: 500,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
                     ),
                   ),
                 ),
@@ -207,6 +221,7 @@ class _ChatWidgetState extends State<ChatWidget>
               backgroundColor: Colors.transparent,
               elevation: 0,
               scrolledUnderElevation: 0,
+              surfaceTintColor: Colors.transparent,
               centerTitle: true,
               title: RichText(
                 textAlign: TextAlign.center,
@@ -250,6 +265,7 @@ class _ChatWidgetState extends State<ChatWidget>
                 children: [
                   Expanded(
                     child: ListView.builder(
+                      physics: const ClampingScrollPhysics(),
                       controller: _scrollController,
                       itemBuilder: (context, idx) {
                         final content = _generatedContent[idx];
@@ -262,15 +278,25 @@ class _ChatWidgetState extends State<ChatWidget>
                       itemCount: _generatedContent.length,
                     ),
                   ),
-                  Padding(
+                  Container(
                     padding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 15,
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
                     ),
                     child: Row(
                       children: [
                         Expanded(
                           child: TextField(
+                            style: TextStyle(
+                              fontSize: baseFontSize,
+                              color: Colors.white,
+                            ),
                             autofocus: true,
                             focusNode: _textFieldFocus,
                             decoration: textFieldDecoration,
@@ -287,6 +313,7 @@ class _ChatWidgetState extends State<ChatWidget>
                             },
                             icon: Icon(
                               Icons.send,
+                              size: baseFontSize + 4,
                               color: Theme.of(context).colorScheme.primary,
                             ),
                           )
@@ -347,7 +374,7 @@ class _ChatWidgetState extends State<ChatWidget>
           "Answer the following question about the compound above:\n$message";
 
       // Get response from API
-      final response = await ApiSrv.fetchResponse(prompt);
+      final response = await apiSrv.fetchResponse(prompt);
 
       // Process and add response to chat
       final processedResponse = processAIText(response);
@@ -358,27 +385,35 @@ class _ChatWidgetState extends State<ChatWidget>
       ));
 
       // Update UI state
-      setState(() {
-        _loading = false; // Hide loading indicator
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false; // Hide loading indicator
+        });
+      }
 
       // Scroll to bottom after a short delay
       await Future.delayed(const Duration(milliseconds: 100));
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      if (mounted && _scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     } catch (e) {
       // Handle errors
-      ApiSrv.showError(context, e.toString());
-      setState(() {
-        _loading = false; // Hide loading indicator
-      });
+      if (mounted) {
+        apiSrv.showError(context, e.toString());
+        setState(() {
+          _loading = false; // Hide loading indicator
+        });
+      }
     } finally {
       // Clear input field and set focus for next message
-      _textController.clear();
-      _textFieldFocus.requestFocus();
+      if (mounted) {
+        _textController.clear();
+        _textFieldFocus.requestFocus();
+      }
     }
   }
 }
@@ -417,7 +452,9 @@ class MessageWidget extends StatelessWidget {
               margin: const EdgeInsets.only(right: 8, top: 4),
               child: CircleAvatar(
                 radius: 16,
-                backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                backgroundColor: theme.colorScheme.primary.withValues(
+                  alpha: 0.1,
+                ),
                 child: Icon(
                   Icons.science_rounded,
                   size: 18,
@@ -436,7 +473,7 @@ class MessageWidget extends StatelessWidget {
                         end: Alignment.bottomRight,
                       )
                     : null,
-                color: isAI ? Colors.transparent : null,
+                color: isAI ? const Color(0xFF1E293B) : null,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(20),
                   topRight: const Radius.circular(20),
@@ -445,27 +482,74 @@ class MessageWidget extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
                 border: isAI
-                    ? Border.all(color: Colors.white.withOpacity(0.05))
+                    ? Border.all(color: Colors.white.withValues(alpha: 0.05))
                     : null,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (isAI)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(
+                              0xFF6366F1,
+                            ).withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.science_rounded,
+                              size: baseFontSize - 4.0,
+                              color: const Color(0xFF6366F1),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'ChemNOR AI',
+                              style: TextStyle(
+                                fontSize: baseFontSize - 4.0,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF6366F1),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   if (text != null)
-                    GptMarkdown(
-                      text!,
-                      style: TextStyle(
-                        color: isFromUser
-                            ? Colors.white
-                            : theme.textTheme.bodyMedium?.color,
-                        fontSize: baseFontSize,
-                        height: 1.4,
+                    Theme(
+                      data: theme.copyWith(
+                        textTheme: theme.textTheme.copyWith(
+                          headlineSmall: TextStyle(fontSize: baseFontSize + 2),
+                          titleLarge: TextStyle(fontSize: baseFontSize + 1),
+                          titleMedium: TextStyle(fontSize: baseFontSize),
+                        ),
+                      ),
+                      child: GptMarkdown(
+                        text!,
+                        style: TextStyle(
+                          color: isFromUser
+                              ? Colors.white
+                              : theme.textTheme.bodyMedium?.color,
+                          fontSize: baseFontSize,
+                          height: 1.4,
+                        ),
                       ),
                     ),
                   if (isAI && text != null) ...[
@@ -480,15 +564,17 @@ class MessageWidget extends StatelessWidget {
                             onTap: () async {
                               final box = Hive.box<String>('historyBox');
                               await box.add(text!);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Saved to history!'),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Saved to history!'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
                             },
                             child: Padding(
-                              padding: EdgeInsets.all(4.0),
+                              padding: const EdgeInsets.all(4.0),
                               child: Icon(
                                 Icons.bookmark_add_outlined,
                                 color: Colors.amber,
@@ -509,7 +595,9 @@ class MessageWidget extends StatelessWidget {
               margin: const EdgeInsets.only(left: 8, top: 4),
               child: CircleAvatar(
                 radius: 16,
-                backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
+                backgroundColor: theme.colorScheme.secondary.withValues(
+                  alpha: 0.1,
+                ),
                 child: Icon(
                   Icons.person_rounded,
                   size: 18,
@@ -528,7 +616,7 @@ class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
 
   @override
-  _ChatPageState createState() => _ChatPageState();
+  State<ChatPage> createState() => _ChatPageState();
 }
 
 /// State class for the general chat page
@@ -581,20 +669,23 @@ class _ChatPageState extends State<ChatPage>
     if (savedMessages.isEmpty) {
       _sendWelcomeMessage();
     } else {
+      if (!mounted) return;
       setState(() {
         for (final msg in savedMessages) {
-          final data = Map<String, dynamic>.from(msg as Map);
-          _chatMessages.add((
-            image: null,
-            text: data['text'] as String?,
-            fromUser: data['fromUser'] as bool,
-          ));
+          if (msg is Map) {
+            final data = Map<String, dynamic>.from(msg);
+            _chatMessages.add((
+              image: null,
+              text: data['text'] as String?,
+              fromUser: data['fromUser'] as bool? ?? false,
+            ));
+          }
         }
       });
 
       // Scroll to bottom after loading
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
+        if (mounted && _scrollController.hasClients) {
           _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
         }
       });
@@ -671,11 +762,13 @@ class _ChatPageState extends State<ChatPage>
       final response = await apiService.fetchResponse(welcomePrompt);
 
       // Add response to chat
-      setState(() {
-        _chatMessages.add((image: null, text: response, fromUser: false));
-        _loading = false; // Hide loading indicator
-      });
-      _saveMessages();
+      if (mounted) {
+        setState(() {
+          _chatMessages.add((image: null, text: response, fromUser: false));
+          _loading = false; // Hide loading indicator
+        });
+        _saveMessages();
+      }
     } catch (e) {
       // Handle errors
       if (mounted) {
@@ -725,24 +818,30 @@ class _ChatPageState extends State<ChatPage>
 
       final response = await apiService.fetchResponse(prompt);
 
-      setState(() {
-        _chatMessages.add((image: null, text: response, fromUser: false));
-        _loading = false;
-      });
-      _saveMessages();
+      if (mounted) {
+        setState(() {
+          _chatMessages.add((image: null, text: response, fromUser: false));
+          _loading = false;
+        });
+        _saveMessages();
+      }
 
       // Scroll to bottom after a short delay
       await Future.delayed(const Duration(milliseconds: 100));
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      if (mounted && _scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     } catch (e) {
-      apiService.showError(context, e.toString());
-      setState(() {
-        _loading = false;
-      });
+      if (mounted) {
+        apiService.showError(context, e.toString());
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -752,6 +851,7 @@ class _ChatPageState extends State<ChatPage>
     final textFieldDecoration = InputDecoration(
       contentPadding: const EdgeInsets.all(15),
       hintText: 'Type a message...',
+      hintStyle: TextStyle(fontSize: baseFontSize, color: Colors.white54),
       border: OutlineInputBorder(
         borderRadius: const BorderRadius.all(Radius.circular(14)),
         borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary),
@@ -778,14 +878,26 @@ class _ChatPageState extends State<ChatPage>
             child: Stack(
               children: [
                 Positioned(
-                  bottom: 100,
-                  left: -100,
+                  top: -100,
+                  right: -100,
                   child: Container(
                     width: 400,
                     height: 400,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF4F46E5).withOpacity(0.06),
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: -150,
+                  left: -150,
+                  child: Container(
+                    width: 500,
+                    height: 500,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
                     ),
                   ),
                 ),
@@ -800,6 +912,7 @@ class _ChatPageState extends State<ChatPage>
               backgroundColor: Colors.transparent,
               elevation: 0,
               scrolledUnderElevation: 0,
+              surfaceTintColor: Colors.transparent,
               centerTitle: true,
               title: RichText(
                 textAlign: TextAlign.center,
@@ -834,172 +947,9 @@ class _ChatPageState extends State<ChatPage>
               ),
             ),
             body: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(6.0),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'ChemNOR ',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  fontSize: baseFontSize + 6.0,
-                                ),
-                              ),
-                              TextSpan(
-                                text: 'it! ',
-                                style: TextStyle(
-                                  fontStyle: FontStyle.italic,
-                                  color: Colors.redAccent,
-                                  fontSize: baseFontSize + 5.0,
-                                ),
-                              ),
-                              TextSpan(
-                                text: 'Chat',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: baseFontSize + 5.0,
-                                  fontWeight: FontWeight.w300,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      RichText(
-                        textAlign: TextAlign.center,
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'C',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 5.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'hemical ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 5.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'H',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 5.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'euristic ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 5.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'E',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 5.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'valuation of ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 5.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'M',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 5.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'olecules ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 5.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'N',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 5.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'etworking for ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 5.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'O',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 5.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'ptimized ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 5.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'R',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 5.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'eactivity',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 5.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ), // Space for header
-                    ],
-                  ),
-                  const SizedBox(height: 8),
                   Expanded(
                     child: ListView.builder(
                       controller: _scrollController,
@@ -1020,34 +970,57 @@ class _ChatPageState extends State<ChatPage>
                       child: CircularProgressIndicator(),
                     ),
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      IconButton.filledTonal(
-                        onPressed: _clearChat,
-                        icon: Icon(Icons.refresh_rounded),
-                        tooltip: 'Reinitialize Chat',
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.redAccent.withOpacity(0.1),
-                          foregroundColor: Colors.redAccent,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 6,
+                      horizontal: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(6),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: _clearChat,
+                          icon: Icon(
+                            Icons.refresh_rounded,
+                            size: baseFontSize + 2,
+                          ),
+                          tooltip: 'Reinitialize Chat',
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.redAccent,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          focusNode: _textFieldFocus,
-                          controller: _textController,
-                          decoration: textFieldDecoration,
-                          onSubmitted: (value) => _sendMessage(value),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            style: TextStyle(
+                              fontSize: baseFontSize,
+                              color: Colors.white,
+                            ),
+                            focusNode: _textFieldFocus,
+                            controller: _textController,
+                            decoration: textFieldDecoration,
+                            onSubmitted: (value) => _sendMessage(value),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton.filled(
-                        onPressed: !_loading
-                            ? () => _sendMessage(_textController.text)
-                            : null,
-                        icon: Icon(Icons.send_rounded),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: !_loading
+                              ? () => _sendMessage(_textController.text)
+                              : null,
+                          icon: Icon(
+                            Icons.send_rounded,
+                            size: baseFontSize + 4,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -1073,6 +1046,7 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final baseFontSize = settingsController.value.fontSize;
     return Align(
       alignment: isFromUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -1081,17 +1055,79 @@ class MessageBubble extends StatelessWidget {
           maxWidth: MediaQuery.of(context).size.width * 0.8,
         ),
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-        padding: const EdgeInsets.all(6),
+
         decoration: BoxDecoration(
           color: isFromUser
               ? const Color.fromARGB(255, 40, 0, 114)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
+              : const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (text != null) GptMarkdown(text!),
+            if (!isFromUser)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.science_rounded,
+                        size: baseFontSize - 4.0,
+                        color: const Color(0xFF6366F1),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'ChemNOR AI',
+                        style: TextStyle(
+                          fontSize: baseFontSize - 4.0,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF6366F1),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            if (text != null)
+              Theme(
+                data: theme.copyWith(
+                  textTheme: theme.textTheme.copyWith(
+                    headlineSmall: TextStyle(fontSize: baseFontSize + 2),
+                    titleLarge: TextStyle(fontSize: baseFontSize + 1),
+                    titleMedium: TextStyle(fontSize: baseFontSize),
+                  ),
+                ),
+                child: GptMarkdown(
+                  text!,
+                  style: TextStyle(
+                    fontSize: baseFontSize,
+                    color: isFromUser
+                        ? Colors.white
+                        : theme.textTheme.bodyMedium?.color,
+                  ),
+                ),
+              ),
             if (!isFromUser && text != null)
               Align(
                 alignment: Alignment.centerRight,
@@ -1100,9 +1136,11 @@ class MessageBubble extends StatelessWidget {
                   onPressed: () async {
                     final box = Hive.box<String>('historyBox');
                     await box.add(text!);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Saved to history!')),
-                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Saved to history!')),
+                      );
+                    }
                   },
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),

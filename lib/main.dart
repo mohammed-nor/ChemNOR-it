@@ -76,6 +76,9 @@ class MyApp extends StatelessWidget {
 
           // App title shown in task switchers and OS interfaces
           title: 'ChemNOR It!',
+          scrollBehavior: const MaterialScrollBehavior().copyWith(
+            overscroll: false,
+          ),
 
           // Theme configuration
           theme: ThemeData(
@@ -87,7 +90,6 @@ class MyApp extends StatelessWidget {
               seedColor: const Color(0xFF6366F1), // Indigo primary
               brightness: Brightness.dark,
               surface: const Color(0xFF0F172A), // Deep slate surface
-              background: const Color(0xFF020617), // Near-black background
             ),
 
             // Scaffold background color
@@ -143,13 +145,15 @@ class MyApp extends StatelessWidget {
               ),
             ),
 
-            // NOTE: textTheme font scaling is intentionally NOT applied here.
-            // Typography.material2021() has null fontSize on several styles,
-            // which causes a crash when fontSizeFactor != 1.0.
-            // Font size is already applied per-widget via settingsController.value.fontSize.
+            // Explicitly define TextTheme to prevent crashes in Typography.material2021()
+            // which occur when styles have null fontSize during scaling or inspection.
+            textTheme: ThemeData.dark().textTheme.apply(
+                  bodyColor: Colors.white,
+                  displayColor: Colors.white,
+                ),
           ),
 
-          // Set the home page to MyHomePage with a title
+          // Home page
           home: const MyHomePage(title: 'ChemNOR it!'),
         );
       },

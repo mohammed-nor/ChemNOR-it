@@ -58,7 +58,7 @@ class ChemnorApi {
     return result ?? '';
   }
 
-  Future<String> findListOfCompoundsJSN_New(String description) async {
+  Future<String> findListOfCompoundsJSNNew(String description) async {
     // Forward the search request to the package client using the correct method name
     final result = await _currentClient.findListOfCompoundsJSN(description);
     return result ?? '';

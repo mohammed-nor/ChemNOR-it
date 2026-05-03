@@ -10,7 +10,7 @@ library;
 // Import necessary packages
 import 'package:chem_nor/chem_nor.dart'; // For GeminiModel enum
 import 'package:chemnor_it/main.dart'; // App configuration
-import 'package:chemnor_it/services/ChemnorApi.dart'; // For manual re-initialization
+import 'package:chemnor_it/services/chemnor_api.dart'; // For manual re-initialization
 import 'package:flutter/material.dart'; // Flutter UI components
 import 'package:hive/hive.dart'; // For persistent storage access
 import 'package:hive_flutter/hive_flutter.dart'; // For Hive Flutter integration
@@ -42,7 +42,9 @@ class _SettingsPageState extends State<SettingPage>
   // Define available LLM models from the chem_nor package, filtering out duplicates
   final List<GeminiModel> llmModels = () {
     final seen = <String>{};
-    return GeminiModel.values.where((model) => seen.add(model.apiName)).toList();
+    return GeminiModel.values
+        .where((model) => seen.add(model.apiName))
+        .toList();
   }();
 
   @override
@@ -123,26 +125,26 @@ class _SettingsPageState extends State<SettingPage>
               child: Stack(
                 children: [
                   Positioned(
-                    top: -120,
-                    left: -120,
+                    top: -100,
+                    right: -100,
                     child: Container(
                       width: 400,
                       height: 400,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF6366F1).withOpacity(0.08),
+                        color: const Color(0xFF6366F1).withValues(alpha: 0.08),
                       ),
                     ),
                   ),
                   Positioned(
                     bottom: -150,
-                    right: -150,
+                    left: -150,
                     child: Container(
                       width: 500,
                       height: 500,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF4F46E5).withOpacity(0.05),
+                        color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
                       ),
                     ),
                   ),
@@ -162,6 +164,7 @@ class _SettingsPageState extends State<SettingPage>
                 elevation: 0,
                 scrolledUnderElevation: 0,
                 flexibleSpace: FlexibleSpaceBar(
+                  expandedTitleScale: 1.0,
                   centerTitle: true,
                   title: RichText(
                     text: TextSpan(
@@ -324,6 +327,10 @@ class _SettingsPageState extends State<SettingPage>
                             TextField(
                               decoration: InputDecoration(
                                 hintText: 'Enter API Key',
+                                hintStyle: TextStyle(
+                                  fontSize: baseFontSize,
+                                  color: Colors.white54,
+                                ),
                                 prefixIcon: Icon(Icons.key_rounded, size: 20),
                                 suffixIcon: _settings.geminiApiKey.isNotEmpty
                                     ? Icon(
@@ -345,8 +352,14 @@ class _SettingsPageState extends State<SettingPage>
                                   "https://aistudio.google.com/app/api-keys",
                                 ),
                               ),
-                              icon: Icon(Icons.open_in_new_rounded, size: 16),
-                              label: Text('Get API Key'),
+                              icon: Icon(
+                                Icons.open_in_new_rounded,
+                                size: baseFontSize,
+                              ),
+                              label: Text(
+                                'Get API Key',
+                                style: TextStyle(fontSize: baseFontSize),
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: theme.colorScheme.primary
                                     .withOpacity(0.1),
@@ -370,8 +383,14 @@ class _SettingsPageState extends State<SettingPage>
                                     ),
                                   );
                                 },
-                                icon: Icon(Icons.refresh_rounded, size: 18),
-                                label: Text('Reinitiate Model'),
+                                icon: Icon(
+                                  Icons.refresh_rounded,
+                                  size: baseFontSize + 2,
+                                ),
+                                label: Text(
+                                  'Save Model',
+                                  style: TextStyle(fontSize: baseFontSize),
+                                ),
                                 style: OutlinedButton.styleFrom(
                                   side: BorderSide(
                                     color: theme.colorScheme.primary

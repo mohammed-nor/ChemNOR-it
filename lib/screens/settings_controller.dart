@@ -74,8 +74,10 @@ class SettingsController extends ValueNotifier<AppSettings> {
 
   /// Replace all settings at once
   void update(AppSettings newSettings) {
-    value = newSettings; // Update the value (ValueNotifier auto-notifies listeners)
-    value.saveToHive(_box); // Save to storage
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      value = newSettings;
+      value.saveToHive(_box);
+    });
   }
 
   /// Update specific settings fields, keeping others unchanged
@@ -86,14 +88,16 @@ class SettingsController extends ValueNotifier<AppSettings> {
     num? diversity,
     String? geminiApiKey,
   }) {
-    // Create new settings object with updated fields
-    value = AppSettings(
+    final newSettings = AppSettings(
       selectedModel: selectedModel ?? value.selectedModel,
       fontSize: fontSize ?? value.fontSize,
       diversity: diversity ?? value.diversity,
       geminiApiKey: geminiApiKey ?? value.geminiApiKey,
     );
-    value.saveToHive(_box); // Save to storage
-    // NOTE: No need to call notifyListeners() — ValueNotifier's value= setter does it automatically
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      value = newSettings;
+      value.saveToHive(_box);
+    });
   }
 }

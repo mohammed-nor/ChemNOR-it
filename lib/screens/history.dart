@@ -84,25 +84,25 @@ class _HistoryWidgetState extends State<HistoryWidget>
                 children: [
                   Positioned(
                     top: -100,
-                    right: -50,
+                    right: -100,
                     child: Container(
                       width: 400,
                       height: 400,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF6366F1).withOpacity(0.08),
+                        color: const Color(0xFF6366F1).withValues(alpha: 0.08),
                       ),
                     ),
                   ),
                   Positioned(
                     bottom: -150,
-                    left: -100,
+                    left: -150,
                     child: Container(
                       width: 500,
                       height: 500,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF4F46E5).withOpacity(0.05),
+                        color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
                       ),
                     ),
                   ),
@@ -113,15 +113,16 @@ class _HistoryWidgetState extends State<HistoryWidget>
 
           // Content
           CustomScrollView(
+            physics: const ClampingScrollPhysics(),
             slivers: [
               SliverAppBar(
-                expandedHeight: 80.0,
                 floating: false,
                 pinned: true,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 scrolledUnderElevation: 0,
                 flexibleSpace: FlexibleSpaceBar(
+                  expandedTitleScale: 1.0,
                   centerTitle: true,
                   title: RichText(
                     textAlign: TextAlign.center,
@@ -297,7 +298,7 @@ class _HistoryWidgetState extends State<HistoryWidget>
                   }
 
                   return SliverPadding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(6.0),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate((context, idx) {
                         final key = box.keyAt(idx);
@@ -378,11 +379,26 @@ class _HistoryWidgetState extends State<HistoryWidget>
                                       ],
                                     ),
                                     const SizedBox(height: 12),
-                                    GptMarkdown(
-                                      value ?? '',
-                                      style: TextStyle(
-                                        fontSize: fontSize,
-                                        height: 1.5,
+                                    Theme(
+                                      data: theme.copyWith(
+                                        textTheme: theme.textTheme.copyWith(
+                                          headlineSmall: TextStyle(
+                                            fontSize: baseFontSize + 2,
+                                          ),
+                                          titleLarge: TextStyle(
+                                            fontSize: baseFontSize + 1,
+                                          ),
+                                          titleMedium: TextStyle(
+                                            fontSize: baseFontSize,
+                                          ),
+                                        ),
+                                      ),
+                                      child: GptMarkdown(
+                                        value ?? '',
+                                        style: TextStyle(
+                                          fontSize: baseFontSize,
+                                          height: 1.4,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(height: 12),
