@@ -169,58 +169,81 @@ class _ChatWidgetState extends State<ChatWidget>
         borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary),
       ),
     );
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          title: Text(
-            widget.compoundData?['name'] != null
-                ? 'Chat: ${widget.compoundData!['name']}'
-                : 'Chat',
-            style: TextStyle(
-              fontSize: baseFontSize + 4.0,
-              fontWeight: FontWeight.bold,
+    return Stack(
+      children: [
+        // Premium Designed Background
+        FadeTransition(
+          opacity: _fadeAnimation,
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 100,
+                  right: -100,
+                  child: Container(
+                    width: 400,
+                    height: 400,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF6366F1).withOpacity(0.06),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-        body: Stack(
-          children: [
-            // Premium Designed Background
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF0F172A), Color(0xFF020617)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Stack(
+        SafeArea(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              centerTitle: true,
+              title: RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
                   children: [
-                    Positioned(
-                      top: 100,
-                      right: -100,
-                      child: Container(
-                        width: 400,
-                        height: 400,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFF6366F1).withOpacity(0.06),
-                        ),
+                    TextSpan(
+                      text: 'ChemNOR ',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: baseFontSize + 4.0,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'it! ',
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: Colors.redAccent,
+                        fontSize: baseFontSize,
+                      ),
+                    ),
+                    TextSpan(
+                      text: widget.compoundData?['name'] != null
+                          ? 'Chat: ${widget.compoundData!['name']}'
+                          : 'Chat',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: baseFontSize,
+                        fontWeight: FontWeight.w300,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-
-            // Chat Content
-            Padding(
-              padding: const EdgeInsets.all(8.0),
+            body: Padding(
+              padding: const EdgeInsets.all(0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +264,7 @@ class _ChatWidgetState extends State<ChatWidget>
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: 25,
+                      vertical: 10,
                       horizontal: 15,
                     ),
                     child: Row(
@@ -256,38 +279,7 @@ class _ChatWidgetState extends State<ChatWidget>
                           ),
                         ),
                         const SizedBox.square(dimension: 15),
-                        IconButton(
-                          onPressed: !_loading
-                              ? () async {
-                                  // Chemistry-related action: call chemist method from ChemnorApi
-                                  if (widget.compoundData != null &&
-                                      widget.compoundData!['cid'] != null) {
-                                    final cid = widget.compoundData!['cid']
-                                        .toString();
-                                    final result = await ApiSrv.chemist(cid);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Chemist result: $result',
-                                        ),
-                                      ),
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('No compound selected.'),
-                                      ),
-                                    );
-                                  }
-                                }
-                              : null,
-                          icon: Icon(
-                            Icons.science, // Chemistry-related icon
-                            color: _loading
-                                ? Theme.of(context).colorScheme.secondary
-                                : Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
+
                         if (!_loading)
                           IconButton(
                             onPressed: () async {
@@ -306,9 +298,9 @@ class _ChatWidgetState extends State<ChatWidget>
                 ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -444,7 +436,7 @@ class MessageWidget extends StatelessWidget {
                         end: Alignment.bottomRight,
                       )
                     : null,
-                color: isAI ? theme.colorScheme.surface : null,
+                color: isAI ? Colors.transparent : null,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(20),
                   topRight: const Radius.circular(20),
@@ -472,7 +464,7 @@ class MessageWidget extends StatelessWidget {
                         color: isFromUser
                             ? Colors.white
                             : theme.textTheme.bodyMedium?.color,
-                        fontSize: baseFontSize + 1.0,
+                        fontSize: baseFontSize,
                         height: 1.4,
                       ),
                     ),
@@ -657,18 +649,12 @@ class _ChatPageState extends State<ChatPage>
     super.dispose();
   }
 
-  @override
-  // Update when dependencies change (e.g., settings)
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Get the latest API key from Hive
-    final currentKey =
-        (Hive.box('settingBox').get('geminiapikey') as String?) ?? '';
-    // Update API service if key has changed
-    if (apiService.apikey != currentKey) {
-      apiService.apikey = currentKey;
-    }
-  }
+  // NOTE: didChangeDependencies is intentionally omitted here.
+  // ChemnorApi already auto-syncs with settingsController via its internal
+  // addListener(_updateClient) call in the constructor, so no manual sync
+  // is needed. Calling apiService.apikey= during didChangeDependencies
+  // triggered settingsController.updateField → notifyListeners during build,
+  // which caused a "setState during build" crash.
 
   /// Send initial welcome message from the AI
   Future<void> _sendWelcomeMessage() async {
@@ -776,43 +762,78 @@ class _ChatPageState extends State<ChatPage>
       ),
     );
 
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
-            // Premium Designed Background
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF0F172A), Color(0xFF020617)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+    return Stack(
+      children: [
+        // Premium Designed Background
+        FadeTransition(
+          opacity: _fadeAnimation,
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  bottom: 100,
+                  left: -100,
+                  child: Container(
+                    width: 400,
+                    height: 400,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF4F46E5).withOpacity(0.06),
+                    ),
                   ),
                 ),
-                child: Stack(
+              ],
+            ),
+          ),
+        ),
+        SafeArea(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              centerTitle: true,
+              title: RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
                   children: [
-                    Positioned(
-                      bottom: 100,
-                      left: -100,
-                      child: Container(
-                        width: 400,
-                        height: 400,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFF4F46E5).withOpacity(0.06),
-                        ),
+                    TextSpan(
+                      text: 'ChemNOR ',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: baseFontSize + 4.0,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'it! ',
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: Colors.redAccent,
+                        fontSize: baseFontSize,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'Chat',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: baseFontSize,
+                        fontWeight: FontWeight.w300,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-
-            // Content
-            Padding(
+            body: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
@@ -1031,9 +1052,9 @@ class _ChatPageState extends State<ChatPage>
                 ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

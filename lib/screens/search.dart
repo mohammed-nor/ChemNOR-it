@@ -10,6 +10,7 @@ library;
 import 'package:chemnor_it/main.dart'; // Main app configuration
 import 'dart:convert'; // For JSON processing
 import 'package:flutter/material.dart'; // Flutter UI components
+import 'package:hive/hive.dart';
 import 'package:url_launcher/url_launcher.dart'; // For launching URLs
 import 'package:http/http.dart' as http; // HTTP requests
 
@@ -62,6 +63,7 @@ class _SearchWidgetState extends State<SearchWidget>
       curve: Curves.easeOut,
     );
     _fadeController.forward();
+    _loadSavedCompounds();
   }
 
   @override
@@ -83,8 +85,234 @@ class _SearchWidgetState extends State<SearchWidget>
   // List to store search results
   List<Map<String, dynamic>> _compoundsResult = [];
 
+  // Saved compounds — persisted in Hive
+  List<Map<String, dynamic>> _savedCompounds = [];
+
   // Error message to display if search fails
   String _errorMessage = '';
+
+  // ── Saved compounds persistence ──────────────────────────────────────────
+
+  /// Load saved compounds from Hive on startup
+  void _loadSavedCompounds() {
+    final box = Hive.box('savedBox');
+    final raw = box.get('saved', defaultValue: <dynamic>[]) as List;
+    setState(() {
+      _savedCompounds = raw
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+    });
+  }
+
+  /// Persist current saved list to Hive
+  void _persistSaved() {
+    Hive.box('savedBox').put(
+      'saved',
+      _savedCompounds.map((c) => Map<String, dynamic>.from(c)).toList(),
+    );
+  }
+
+  /// Returns true if the compound (by cid) is already saved
+  bool _isSaved(Map<String, dynamic> compound) {
+    final cid = compound['cid']?.toString();
+    if (cid == null) return false;
+    return _savedCompounds.any((s) => s['cid']?.toString() == cid);
+  }
+
+  /// Toggle save/unsave for a compound
+  void _toggleSave(Map<String, dynamic> compound) {
+    setState(() {
+      if (_isSaved(compound)) {
+        _savedCompounds.removeWhere(
+          (s) => s['cid']?.toString() == compound['cid']?.toString(),
+        );
+      } else {
+        _savedCompounds.add(Map<String, dynamic>.from(compound));
+      }
+    });
+    _persistSaved();
+  }
+
+  /// Show the saved compounds bottom sheet
+  void _showSavedSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.75,
+            ),
+            decoration: const BoxDecoration(
+              color: Color(0xFF0F172A),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Column(
+              children: [
+                // Handle
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.bookmark_rounded,
+                        color: Color(0xFF6366F1),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Saved Compounds (${_savedCompounds.length})',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(color: Colors.white12),
+                // List
+                if (_savedCompounds.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(40),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.bookmark_border_rounded,
+                          color: Colors.white24,
+                          size: 48,
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          'No saved compounds yet.\nTap the bookmark on any result to save it.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white38, height: 1.6),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      itemCount: _savedCompounds.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (ctx, i) {
+                        final c = _savedCompounds[i];
+                        final cid = c['cid']?.toString();
+                        return Material(
+                          color: Colors.white.withOpacity(0.04),
+                          borderRadius: BorderRadius.circular(16),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ChatWidget(compoundData: c),
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                children: [
+                                  // Molecule thumbnail
+                                  Container(
+                                    width: 52,
+                                    height: 52,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: cid != null
+                                        ? Image.network(
+                                            'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/PNG',
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (_, __, ___) =>
+                                                const Icon(
+                                                  Icons.science,
+                                                  size: 28,
+                                                ),
+                                          )
+                                        : const Icon(Icons.science, size: 28),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  // Name & CID
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          c['name'] ?? 'Unknown',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        if (cid != null)
+                                          Text(
+                                            'CID: $cid',
+                                            style: TextStyle(
+                                              color: Colors.white.withOpacity(
+                                                0.4,
+                                              ),
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Remove button
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.bookmark_remove_rounded,
+                                      color: Colors.redAccent,
+                                      size: 22,
+                                    ),
+                                    onPressed: () {
+                                      setSheetState(() {
+                                        _savedCompounds.removeAt(i);
+                                      });
+                                      setState(() {});
+                                      _persistSaved();
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   // Strips markdown code fences that Gemini sometimes wraps around JSON
   String _sanitizeJson(String raw) {
@@ -139,7 +367,8 @@ class _SearchWidgetState extends State<SearchWidget>
       // Handle empty response
       if (rawResult.isEmpty) {
         throw const FormatException(
-            'The AI returned an empty response. Check your API key in Settings.');
+          'The AI returned an empty response. Check your API key in Settings.',
+        );
       }
 
       // Update UI to show processing stage
@@ -157,9 +386,10 @@ class _SearchWidgetState extends State<SearchWidget>
         decodedJson = jsonDecode(sanitised);
       } on FormatException catch (fe) {
         throw FormatException(
-            'Could not parse AI response as JSON. '
-            'Raw response (first 200 chars): ${rawResult.substring(0, rawResult.length.clamp(0, 200))}\n'
-            'Parse error: $fe');
+          'Could not parse AI response as JSON. '
+          'Raw response (first 200 chars): ${rawResult.substring(0, rawResult.length.clamp(0, 200))}\n'
+          'Parse error: $fe',
+        );
       }
 
       // Step 4: Process response based on its format
@@ -173,7 +403,8 @@ class _SearchWidgetState extends State<SearchWidget>
           compoundList = compounds;
         } else {
           throw const FormatException(
-              '"retrieved_compounds" field is not a list.');
+            '"retrieved_compounds" field is not a list.',
+          );
         }
       } else if (decodedJson is List) {
         // Format 2: Direct list [...]
@@ -184,7 +415,8 @@ class _SearchWidgetState extends State<SearchWidget>
         throw Exception('API error: ${decodedJson['error']}');
       } else {
         throw FormatException(
-            'Unexpected JSON structure. Got: ${decodedJson.runtimeType}');
+          'Unexpected JSON structure. Got: ${decodedJson.runtimeType}',
+        );
       }
 
       // Safely convert each element — skip any that are not Maps
@@ -195,7 +427,8 @@ class _SearchWidgetState extends State<SearchWidget>
 
       if (parsed.isEmpty) {
         throw const FormatException(
-            'No valid compound entries found in the response.');
+          'No valid compound entries found in the response.',
+        );
       }
 
       setState(() {
@@ -322,12 +555,55 @@ class _SearchWidgetState extends State<SearchWidget>
           CustomScrollView(
             slivers: [
               SliverAppBar(
-                expandedHeight: 180.0,
+                expandedHeight: 100,
                 floating: false,
                 pinned: true,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 scrolledUnderElevation: 0,
+                actions: [
+                  // Saved compounds badge button
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        IconButton(
+                          onPressed: _showSavedSheet,
+                          icon: Icon(
+                            _savedCompounds.isNotEmpty
+                                ? Icons.science_rounded
+                                : Icons.science_rounded,
+                            color: _savedCompounds.isNotEmpty
+                                ? const Color(0xFF6366F1)
+                                : Colors.white54,
+                          ),
+                          tooltip: 'Saved Compounds',
+                        ),
+                        if (_savedCompounds.isNotEmpty)
+                          Positioned(
+                            top: 1,
+                            right: 1,
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF6366F1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                '${_savedCompounds.length}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
                 flexibleSpace: FlexibleSpaceBar(
                   centerTitle: true,
                   title: RichText(
@@ -477,7 +753,7 @@ class _SearchWidgetState extends State<SearchWidget>
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(10.0),
                   child: Column(
                     children: [
                       // Search text field
@@ -501,7 +777,77 @@ class _SearchWidgetState extends State<SearchWidget>
                           }
                         },
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+                      // ── No API key warning banner ────────────────────────
+                      if (apiKey.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: Colors.amber.withOpacity(0.35),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: Colors.amber,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'No API key configured. '
+                                    'Get a free key from Google AI Studio to use ChemNOR.',
+                                    style: TextStyle(
+                                      color: Colors.amber.withOpacity(0.85),
+                                      fontSize: fontSize - 2,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                GestureDetector(
+                                  onTap: () => launchUrl(
+                                    Uri.parse(
+                                      'https://aistudio.google.com/app/api-keys',
+                                    ),
+                                    mode: LaunchMode.externalApplication,
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: Colors.amber.withOpacity(0.4),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Get Key',
+                                      style: TextStyle(
+                                        color: Colors.amber,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
 
                       // ── Progress / Error / Results ──────────────────────
 
@@ -511,6 +857,7 @@ class _SearchWidgetState extends State<SearchWidget>
                           _progress != SearchProgress.error)
                         Column(
                           children: [
+                            const SizedBox(height: 20),
                             LinearProgressIndicator(
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 Theme.of(context).colorScheme.primary,
@@ -547,7 +894,6 @@ class _SearchWidgetState extends State<SearchWidget>
                             ),
                           ],
                         )
-
                       // Error card — always visible when progress == error
                       else if (_progress == SearchProgress.error)
                         Container(
@@ -557,15 +903,19 @@ class _SearchWidgetState extends State<SearchWidget>
                             color: Colors.red.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                                color: Colors.red.withOpacity(0.4)),
+                              color: Colors.red.withOpacity(0.4),
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.error_outline_rounded,
-                                      color: Colors.redAccent, size: 20),
+                                  const Icon(
+                                    Icons.error_outline_rounded,
+                                    color: Colors.redAccent,
+                                    size: 20,
+                                  ),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Search Failed',
@@ -591,11 +941,14 @@ class _SearchWidgetState extends State<SearchWidget>
                                   _progress = SearchProgress.idle;
                                   _errorMessage = '';
                                 }),
-                                icon: const Icon(Icons.refresh_rounded,
-                                    size: 16),
+                                icon: const Icon(
+                                  Icons.refresh_rounded,
+                                  size: 16,
+                                ),
                                 label: const Text('Dismiss'),
                                 style: TextButton.styleFrom(
-                                    foregroundColor: Colors.redAccent),
+                                  foregroundColor: Colors.redAccent,
+                                ),
                               ),
                             ],
                           ),
@@ -685,7 +1038,8 @@ class _SearchWidgetState extends State<SearchWidget>
                                                     style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      fontSize: baseFontSize + 4.0,
+                                                      fontSize:
+                                                          baseFontSize + 4.0,
                                                       color: Colors.white,
                                                     ),
                                                   ),
@@ -695,7 +1049,8 @@ class _SearchWidgetState extends State<SearchWidget>
                                                     style: TextStyle(
                                                       color: Colors.white
                                                           .withOpacity(0.5),
-                                                      fontSize: baseFontSize - 2.0,
+                                                      fontSize:
+                                                          baseFontSize - 2.0,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 8),
@@ -742,7 +1097,9 @@ class _SearchWidgetState extends State<SearchWidget>
                                                             Text(
                                                               '${snapshot.data ?? "..."} Citations',
                                                               style: TextStyle(
-                                                                fontSize: baseFontSize - 3.0,
+                                                                fontSize:
+                                                                    baseFontSize -
+                                                                    3.0,
                                                                 color: Color(
                                                                   0xFF818CF8,
                                                                 ),
@@ -790,7 +1147,8 @@ class _SearchWidgetState extends State<SearchWidget>
                                                   child: Text(
                                                     '${e.key}: ${e.value}',
                                                     style: TextStyle(
-                                                      fontSize: baseFontSize - 2.0,
+                                                      fontSize:
+                                                          baseFontSize - 2.0,
                                                     ),
                                                   ),
                                                 ),
@@ -822,9 +1180,7 @@ class _SearchWidgetState extends State<SearchWidget>
                                                   Icons.school_rounded,
                                                   size: 18,
                                                 ),
-                                                label: Text(
-                                                  'Scholar search',
-                                                ),
+                                                label: Text('Scholar search'),
                                                 style: ElevatedButton.styleFrom(
                                                   backgroundColor: const Color(
                                                     0xFF6366F1,
@@ -836,14 +1192,32 @@ class _SearchWidgetState extends State<SearchWidget>
                                                 ),
                                               ),
                                             ),
-                                            const SizedBox(width: 12),
+                                            const SizedBox(width: 8),
+                                            // Save / bookmark toggle
                                             IconButton.filledTonal(
-                                              onPressed:
-                                                  () {}, // Potential for more actions
-                                              icon: Icon(
-                                                Icons.share_rounded,
-                                                size: 20,
+                                              onPressed: () =>
+                                                  _toggleSave(compound),
+                                              style: IconButton.styleFrom(
+                                                backgroundColor:
+                                                    _isSaved(compound)
+                                                    ? const Color(0xFF6366F1)
+                                                    : Colors.white.withOpacity(
+                                                        0.07,
+                                                      ),
                                               ),
+                                              icon: Icon(
+                                                _isSaved(compound)
+                                                    ? Icons.bookmark_rounded
+                                                    : Icons
+                                                          .bookmark_border_rounded,
+                                                size: 20,
+                                                color: _isSaved(compound)
+                                                    ? Colors.white
+                                                    : Colors.white54,
+                                              ),
+                                              tooltip: _isSaved(compound)
+                                                  ? 'Remove from saved'
+                                                  : 'Save compound',
                                             ),
                                           ],
                                         ),

@@ -41,6 +41,9 @@ void main() async {
   // Open 'chatBox' for storing the general chat message history
   await Hive.openBox('chatBox');
 
+  // Open 'savedBox' for storing user-saved compound results
+  await Hive.openBox('savedBox');
+
   // Get reference to settings box for initial setup and controller
   final settingsBox = await Hive.openBox('settingBox');
 

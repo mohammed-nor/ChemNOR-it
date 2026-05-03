@@ -30,10 +30,13 @@ class ChemnorApi {
     _updateClient();
   }
 
-  /// Compatibility for legacy code that tries to set apikey directly
-  set apikey(String value) {
-    if (value != settingsController.value.geminiApiKey) {
-      settingsController.updateField(geminiApiKey: value);
+  /// Compatibility for legacy code that tries to set apikey directly.
+  /// Uses postFrameCallback to guard against being called during a build phase.
+  set apikey(String newKey) {
+    if (newKey != settingsController.value.geminiApiKey) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        settingsController.updateField(geminiApiKey: newKey);
+      });
     }
   }
 
