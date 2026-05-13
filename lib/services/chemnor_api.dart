@@ -43,19 +43,46 @@ class ChemnorApi {
   String get apikey => settingsController.value.geminiApiKey;
 
   Future<String> fetchResponse(String inputText) async {
-    final result = await _currentClient.chat(inputText, '');
-    return result ?? 'No response from ChemNOR';
+    try {
+      final result = await _currentClient.chat(inputText, '');
+      return result ?? 'No response from ChemNOR';
+    } catch (e) {
+      if (e.toString().contains('HttpException') || e.toString().contains('Connection closed')) {
+        return 'Network Error: Connection lost while talking to AI. Please check your internet and try again.';
+      }
+      rethrow;
+    }
   }
 
   Future<String> chemist(String cid) async {
-    final result = await _currentClient.chemist(cid);
-    return result ?? 'Analysis failed';
+    try {
+      final result = await _currentClient.chemist(cid);
+      return result ?? 'Analysis failed';
+    } catch (e) {
+      if (e.toString().contains('HttpException')) {
+        return 'Network Error: Failed to fetch compound analysis from PubChem.';
+      }
+      rethrow;
+    }
   }
 
   Future<String> findListOfCompoundsJSN(String description) async {
-    // Forward the search request to the package client using the correct method name
-    final result = await _currentClient.findListOfCompoundsJSN(description);
-    return result ?? '';
+    int retries = 2;
+    while (retries >= 0) {
+      try {
+        final result = await _currentClient.findListOfCompoundsJSN(description);
+        return result ?? '';
+      } catch (e) {
+        if (retries == 0 || (!e.toString().contains('HttpException') && !e.toString().contains('Connection closed'))) {
+          // If we are out of retries or it's not a network error, rethrow
+          rethrow;
+        }
+        // Wait a bit before retrying
+        await Future.delayed(const Duration(milliseconds: 1000));
+        retries--;
+      }
+    }
+    return '';
   }
 
   Future<String> findListOfCompoundsJSNNew(String description) async {

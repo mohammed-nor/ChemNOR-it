@@ -30,10 +30,7 @@ class SettingPage extends StatefulWidget {
 }
 
 /// State class for the settings page
-class _SettingsPageState extends State<SettingPage>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
+class _SettingsPageState extends State<SettingPage> {
   // Store current app settings
   late AppSettings _settings;
   // Controller for the API key text field - must be state-level to avoid accessibility tree desync
@@ -51,16 +48,6 @@ class _SettingsPageState extends State<SettingPage>
   // Initialize state when widget is created
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    );
-    _fadeController.forward();
-
     // Get current settings from the controller
     _settings = settingsController.value;
 
@@ -75,7 +62,6 @@ class _SettingsPageState extends State<SettingPage>
 
   @override
   void dispose() {
-    _fadeController.dispose();
     _apiKeyController.dispose();
     super.dispose();
   }
@@ -112,10 +98,8 @@ class _SettingsPageState extends State<SettingPage>
       body: Stack(
         children: [
           // Premium Designed Background
-          FadeTransition(
-            opacity: _fadeAnimation,
-            child: Container(
-              decoration: const BoxDecoration(
+          Container(
+            decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Color(0xFF0F172A), Color(0xFF020617)],
                   begin: Alignment.topLeft,
@@ -151,7 +135,6 @@ class _SettingsPageState extends State<SettingPage>
                 ],
               ),
             ),
-          ),
 
           // Content
           CustomScrollView(
@@ -365,43 +348,6 @@ class _SettingsPageState extends State<SettingPage>
                                     .withOpacity(0.1),
                                 foregroundColor: theme.colorScheme.primary,
                                 minimumSize: const Size(double.infinity, 44),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  ChemnorApi().reinitiate();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'ChemNOR Model Reinitiated!',
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                },
-                                icon: Icon(
-                                  Icons.refresh_rounded,
-                                  size: baseFontSize + 2,
-                                ),
-                                label: Text(
-                                  'Save Model',
-                                  style: TextStyle(fontSize: baseFontSize),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                    color: theme.colorScheme.primary
-                                        .withOpacity(0.5),
-                                  ),
-                                  foregroundColor: theme.colorScheme.primary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  minimumSize: const Size(double.infinity, 44),
-                                ),
                               ),
                             ),
                           ],

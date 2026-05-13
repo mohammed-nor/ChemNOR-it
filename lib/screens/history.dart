@@ -28,10 +28,7 @@ class HistoryWidget extends StatefulWidget {
 }
 
 /// State class for the history widget
-class _HistoryWidgetState extends State<HistoryWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
+class _HistoryWidgetState extends State<HistoryWidget> {
   // Hive box to store string messages
   late Box<String> _historyBox;
 
@@ -39,23 +36,12 @@ class _HistoryWidgetState extends State<HistoryWidget>
   // Initialize state when widget is created
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    );
-    _fadeController.forward();
-
     // Get reference to the historyBox
     _historyBox = Hive.box<String>('historyBox');
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
     super.dispose();
   }
 
@@ -70,44 +56,41 @@ class _HistoryWidgetState extends State<HistoryWidget>
       body: Stack(
         children: [
           // Premium Designed Background
-          FadeTransition(
-            opacity: _fadeAnimation,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF0F172A), Color(0xFF020617)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -100,
+                  right: -100,
+                  child: Container(
+                    width: 400,
+                    height: 400,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+                    ),
+                  ),
                 ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: -100,
-                    right: -100,
-                    child: Container(
-                      width: 400,
-                      height: 400,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF6366F1).withValues(alpha: 0.08),
-                      ),
+                Positioned(
+                  bottom: -150,
+                  left: -150,
+                  child: Container(
+                    width: 500,
+                    height: 500,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
                     ),
                   ),
-                  Positioned(
-                    bottom: -150,
-                    left: -150,
-                    child: Container(
-                      width: 500,
-                      height: 500,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
 
@@ -395,6 +378,7 @@ class _HistoryWidgetState extends State<HistoryWidget>
                                       ),
                                       child: GptMarkdown(
                                         value ?? '',
+                                        useDollarSignsForLatex: true,
                                         style: TextStyle(
                                           fontSize: baseFontSize,
                                           height: 1.4,

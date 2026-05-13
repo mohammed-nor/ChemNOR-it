@@ -40,10 +40,7 @@ class SearchWidget extends StatefulWidget {
 }
 
 // State class for the SearchWidget
-class _SearchWidgetState extends State<SearchWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
+class _SearchWidgetState extends State<SearchWidget> {
   final apiSrv = ChemnorApi();
 
   // Track the current search progress state
@@ -55,21 +52,11 @@ class _SearchWidgetState extends State<SearchWidget>
   @override
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    );
-    _fadeController.forward();
     _loadSavedCompounds();
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -135,190 +122,6 @@ class _SearchWidgetState extends State<SearchWidget>
   }
 
   /// Show the saved compounds bottom sheet
-  void _showSavedSheet() {
-    final baseFontSize = settingsController.value.fontSize;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          return Container(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.75,
-            ),
-            decoration: const BoxDecoration(
-              color: Color(0xFF0F172A),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-            ),
-            child: Column(
-              children: [
-                // Handle
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                // Header
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.bookmark_rounded,
-                        color: Color(0xFF6366F1),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Saved Compounds (${_savedCompounds.length})',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: baseFontSize + 1.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(color: Colors.white12),
-                // List
-                if (_savedCompounds.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(40),
-                    child: Column(
-                      children: [
-                        const Icon(
-                          Icons.bookmark_border_rounded,
-                          color: Colors.white24,
-                          size: 48,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No saved compounds yet.\nTap the bookmark on any result to save it.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white38,
-                            height: 1.6,
-                            fontSize: baseFontSize - 2.0,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  Expanded(
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                      itemCount: _savedCompounds.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (ctx, i) {
-                        final c = _savedCompounds[i];
-                        final cid = c['cid']?.toString();
-                        return Material(
-                          color: Colors.white.withValues(alpha: 0.04),
-                          borderRadius: BorderRadius.circular(16),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: () {
-                              Navigator.pop(ctx);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => ChatWidget(compoundData: c),
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
-                              ),
-                              child: Row(
-                                children: [
-                                  // Molecule thumbnail
-                                  Container(
-                                    width: 52,
-                                    height: 52,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: cid != null
-                                        ? Image.network(
-                                            'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/PNG',
-                                            fit: BoxFit.contain,
-                                            errorBuilder: (_, __, ___) =>
-                                                const Icon(
-                                                  Icons.science,
-                                                  size: 28,
-                                                ),
-                                          )
-                                        : const Icon(Icons.science, size: 28),
-                                  ),
-                                  const SizedBox(width: 14),
-                                  // Name & CID
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          c['name'] ?? 'Unknown',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: baseFontSize - 2.0,
-                                          ),
-                                        ),
-                                        if (cid != null)
-                                          Text(
-                                            'CID: $cid',
-                                            style: TextStyle(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.4,
-                                              ),
-                                              fontSize: baseFontSize - 4.0,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                  // Remove button
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.bookmark_remove_rounded,
-                                      color: Colors.redAccent,
-                                      size: 22,
-                                    ),
-                                    onPressed: () {
-                                      setSheetState(() {
-                                        _savedCompounds.removeAt(i);
-                                      });
-                                      setState(() {});
-                                      _persistSaved();
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
 
   // Strips markdown code fences that Gemini sometimes wraps around JSON
   String _sanitizeJson(String raw) {
@@ -452,10 +255,20 @@ class _SearchWidgetState extends State<SearchWidget>
       }
     } catch (e) {
       if (!mounted) return;
+      
+      String displayError = e.toString();
+      
+      // Clean up common error strings for better user readability
+      if (displayError.contains('HttpException') || displayError.contains('Connection closed')) {
+        displayError = 'Network Connection Issue: PubChem or the AI service closed the connection unexpectedly. This can happen due to unstable internet or temporary service limits. Please try your search again in a moment.';
+      } else if (displayError.contains('NoSuchMethodError') && displayError.contains('[]')) {
+        displayError = 'Data Processing Error: The AI returned an unexpected response format. Try refining your search query or switching the model in Settings.';
+      }
+      
       if (mounted) {
         setState(() {
           _progress = SearchProgress.error;
-          _errorMessage = e.toString();
+          _errorMessage = displayError;
         });
       }
     }
@@ -478,8 +291,13 @@ class _SearchWidgetState extends State<SearchWidget>
         if (infoList == null) return '0';
         final information = infoList['Information'];
         if (information == null || (information as List).isEmpty) return '0';
-        final pubmedIds = information[0]['PubMedID'] as List?;
-        return pubmedIds?.length.toString() ?? '0';
+        
+        final firstInfo = information[0];
+        if (firstInfo is Map && firstInfo.containsKey('PubMedID')) {
+          final pubmedIds = firstInfo['PubMedID'] as List?;
+          return pubmedIds?.length.toString() ?? '0';
+        }
+        return '0';
       }
     } catch (e) {
       // Silent catch or use proper logging
@@ -528,45 +346,42 @@ class _SearchWidgetState extends State<SearchWidget>
       body: Stack(
         children: [
           // Premium Designed Background
-          FadeTransition(
-            opacity: _fadeAnimation,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF0F172A), Color(0xFF020617)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Stack(
+              children: [
+                // Subtle glowing orbs for depth
+                Positioned(
+                  top: -100,
+                  right: -100,
+                  child: Container(
+                    width: 400,
+                    height: 400,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+                    ),
+                  ),
                 ),
-              ),
-              child: Stack(
-                children: [
-                  // Subtle glowing orbs for depth
-                  Positioned(
-                    top: -100,
-                    right: -100,
-                    child: Container(
-                      width: 400,
-                      height: 400,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF6366F1).withValues(alpha: 0.08),
-                      ),
+                Positioned(
+                  bottom: -150,
+                  left: -150,
+                  child: Container(
+                    width: 500,
+                    height: 500,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
                     ),
                   ),
-                  Positioned(
-                    bottom: -150,
-                    left: -150,
-                    child: Container(
-                      width: 500,
-                      height: 500,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
 
@@ -575,55 +390,12 @@ class _SearchWidgetState extends State<SearchWidget>
             physics: const ClampingScrollPhysics(),
             slivers: [
               SliverAppBar(
-                expandedHeight: 100,
+                expandedHeight: 50,
                 floating: false,
                 pinned: true,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 scrolledUnderElevation: 0,
-                actions: [
-                  // Saved compounds badge button
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        IconButton(
-                          onPressed: _showSavedSheet,
-                          icon: Icon(
-                            _savedCompounds.isNotEmpty
-                                ? Icons.science_rounded
-                                : Icons.science_rounded,
-                            color: _savedCompounds.isNotEmpty
-                                ? const Color(0xFF6366F1)
-                                : Colors.white54,
-                          ),
-                          tooltip: 'Saved Compounds',
-                        ),
-                        if (_savedCompounds.isNotEmpty)
-                          Positioned(
-                            top: 1,
-                            right: 1,
-                            child: Container(
-                              padding: const EdgeInsets.all(3),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF6366F1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Text(
-                                '${_savedCompounds.length}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
                 flexibleSpace: FlexibleSpaceBar(
                   expandedTitleScale: 1.0,
                   centerTitle: true,
@@ -993,9 +765,10 @@ class _SearchWidgetState extends State<SearchWidget>
                               ),
                             ],
                           ),
-                        )
+                        ),
                       // Results display - list of compound cards
-                      else if (_compoundsResult.isNotEmpty)
+                      // Results display - list of compound cards
+                      if (_compoundsResult.isNotEmpty)
                         ListView.builder(
                           physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
@@ -1300,10 +1073,133 @@ class _SearchWidgetState extends State<SearchWidget>
                               ),
                             );
                           },
-                        )
-                      // Empty state - no results yet
-                      else
-                        Text(''),
+                        ),
+
+                      // ── Saved Compounds Section ─────────────────────────
+                      if (_savedCompounds.isNotEmpty) ...[
+                        const SizedBox(height: 32),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.bookmark_rounded,
+                              color: Color(0xFF6366F1),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Saved Compounds (${_savedCompounds.length})',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: baseFontSize + 2.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        ListView.separated(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.only(bottom: 40),
+                          itemCount: _savedCompounds.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (ctx, i) {
+                            final c = _savedCompounds[i];
+                            final cid = c['cid']?.toString();
+                            return Material(
+                              color: Colors.white.withValues(alpha: 0.04),
+                              borderRadius: BorderRadius.circular(20),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(20),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          ChatWidget(compoundData: c),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(14),
+                                  child: Row(
+                                    children: [
+                                      // Molecule thumbnail
+                                      Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: cid != null
+                                            ? Image.network(
+                                                'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/PNG',
+                                                fit: BoxFit.contain,
+                                                errorBuilder: (_, __, ___) =>
+                                                    const Icon(
+                                                      Icons.science,
+                                                      size: 32,
+                                                    ),
+                                              )
+                                            : const Icon(
+                                                Icons.science,
+                                                size: 32,
+                                              ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      // Name & CID
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              c['name'] ?? 'Unknown',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: baseFontSize,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            if (cid != null)
+                                              Text(
+                                                'CID: $cid',
+                                                style: TextStyle(
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.4),
+                                                  fontSize: baseFontSize - 4,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                      // Remove button
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.bookmark_remove_rounded,
+                                          color: Colors.redAccent,
+                                          size: 22,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _savedCompounds.removeAt(i);
+                                          });
+                                          _persistSaved();
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ],
                   ),
                 ),

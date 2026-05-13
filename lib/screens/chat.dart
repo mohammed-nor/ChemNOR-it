@@ -30,10 +30,7 @@ class ChatWidget extends StatefulWidget {
 }
 
 /// State class for the compound-specific chat widget
-class _ChatWidgetState extends State<ChatWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
+class _ChatWidgetState extends State<ChatWidget> {
   // Scroll controller for the chat messages list
   final ScrollController _scrollController = ScrollController();
 
@@ -57,16 +54,6 @@ class _ChatWidgetState extends State<ChatWidget>
   // Initialize state when widget is created
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    );
-    _fadeController.forward();
-
     // If compound data is provided, send an initial message about it
     if (widget.compoundData != null) {
       // Format compound data as a string
@@ -86,7 +73,6 @@ class _ChatWidgetState extends State<ChatWidget>
 
   @override
   void dispose() {
-    _fadeController.dispose();
     _scrollController.dispose();
     _textController.dispose();
     _textFieldFocus.dispose();
@@ -174,46 +160,44 @@ class _ChatWidgetState extends State<ChatWidget>
     return Stack(
       children: [
         // Premium Designed Background
-        FadeTransition(
-          opacity: _fadeAnimation,
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF0F172A), Color(0xFF020617)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -100,
-                  right: -100,
-                  child: Container(
-                    width: 400,
-                    height: 400,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF6366F1).withValues(alpha: 0.08),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: -150,
-                  left: -150,
-                  child: Container(
-                    width: 500,
-                    height: 500,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
-                    ),
-                  ),
-                ),
-              ],
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0F172A), Color(0xFF020617)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
+          child: Stack(
+            children: [
+              Positioned(
+                top: -100,
+                right: -100,
+                child: Container(
+                  width: 400,
+                  height: 400,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -150,
+                left: -150,
+                child: Container(
+                  width: 500,
+                  height: 500,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+
         SafeArea(
           child: Scaffold(
             backgroundColor: Colors.transparent,
@@ -394,11 +378,7 @@ class _ChatWidgetState extends State<ChatWidget>
       // Scroll to bottom after a short delay
       await Future.delayed(const Duration(milliseconds: 100));
       if (mounted && _scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       }
     } catch (e) {
       // Handle errors
@@ -463,6 +443,7 @@ class MessageWidget extends StatelessWidget {
               ),
             ),
           Flexible(
+            fit: isAI ? FlexFit.tight : FlexFit.loose,
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
@@ -492,7 +473,7 @@ class MessageWidget extends StatelessWidget {
                     : null,
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (isAI)
                     Padding(
@@ -543,6 +524,7 @@ class MessageWidget extends StatelessWidget {
                       ),
                       child: GptMarkdown(
                         text!,
+                        useDollarSignsForLatex: true,
                         style: TextStyle(
                           color: isFromUser
                               ? Colors.white
@@ -620,10 +602,7 @@ class ChatPage extends StatefulWidget {
 }
 
 /// State class for the general chat page
-class _ChatPageState extends State<ChatPage>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
+class _ChatPageState extends State<ChatPage> {
   // Scroll controller for the chat messages list
   final ScrollController _scrollController = ScrollController();
 
@@ -647,16 +626,6 @@ class _ChatPageState extends State<ChatPage>
   // Initialize state when widget is created
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    );
-    _fadeController.forward();
-
     // Load messages from disk or send welcome message if none exist
     _loadMessages();
   }
@@ -733,7 +702,6 @@ class _ChatPageState extends State<ChatPage>
 
   @override
   void dispose() {
-    _fadeController.dispose();
     _scrollController.dispose();
     _textController.dispose();
     _textFieldFocus.dispose();
@@ -829,11 +797,7 @@ class _ChatPageState extends State<ChatPage>
       // Scroll to bottom after a short delay
       await Future.delayed(const Duration(milliseconds: 100));
       if (mounted && _scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       }
     } catch (e) {
       if (mounted) {
@@ -865,46 +829,44 @@ class _ChatPageState extends State<ChatPage>
     return Stack(
       children: [
         // Premium Designed Background
-        FadeTransition(
-          opacity: _fadeAnimation,
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF0F172A), Color(0xFF020617)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -100,
-                  right: -100,
-                  child: Container(
-                    width: 400,
-                    height: 400,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF6366F1).withValues(alpha: 0.08),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: -150,
-                  left: -150,
-                  child: Container(
-                    width: 500,
-                    height: 500,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
-                    ),
-                  ),
-                ),
-              ],
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0F172A), Color(0xFF020617)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
+          child: Stack(
+            children: [
+              Positioned(
+                top: -100,
+                right: -100,
+                child: Container(
+                  width: 400,
+                  height: 400,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -150,
+                left: -150,
+                child: Container(
+                  width: 500,
+                  height: 500,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+
         SafeArea(
           child: Scaffold(
             backgroundColor: Colors.transparent,
@@ -1051,8 +1013,9 @@ class MessageBubble extends StatelessWidget {
     return Align(
       alignment: isFromUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
+        width: !isFromUser ? double.infinity : null,
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.8,
+          maxWidth: MediaQuery.of(context).size.width * 0.92,
         ),
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
 
@@ -1071,7 +1034,7 @@ class MessageBubble extends StatelessWidget {
         ),
         padding: const EdgeInsets.all(12),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (!isFromUser)
               Padding(
@@ -1120,6 +1083,7 @@ class MessageBubble extends StatelessWidget {
                 ),
                 child: GptMarkdown(
                   text!,
+                  useDollarSignsForLatex: true,
                   style: TextStyle(
                     fontSize: baseFontSize,
                     color: isFromUser
