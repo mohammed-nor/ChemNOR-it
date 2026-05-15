@@ -39,7 +39,7 @@ class _MyHomePageState extends State<MyHomePage> {
   // Track which tab is currently selected (0 = Search by default)
   int _bottomNavIndex = 0;
 
-  // We remove the cached 'pages' list to ensure all widgets are recreated 
+  // We remove the cached 'pages' list to ensure all widgets are recreated
   // and pick up the latest settings (font size, etc.) when the app rebuilds.
 
   @override
@@ -50,7 +50,8 @@ class _MyHomePageState extends State<MyHomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final box = Hive.box('settingBox');
-      final alreadyDismissed = box.get('guideShown', defaultValue: false) as bool;
+      final alreadyDismissed =
+          box.get('guideShown', defaultValue: false) as bool;
       if (!alreadyDismissed && settingsController.value.geminiApiKey.isEmpty) {
         _showApiKeyGuide();
       }
@@ -94,6 +95,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
       // Bottom navigation bar
       bottomNavigationBar: NavigationBar(
+        labelTextStyle: WidgetStateProperty.all(
+          TextStyle(fontSize: settingsController.value.fontSize - 2.0),
+        ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         indicatorColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
         selectedIndex: _bottomNavIndex,

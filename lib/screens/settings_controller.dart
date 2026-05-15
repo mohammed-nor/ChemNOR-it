@@ -28,10 +28,10 @@ class AppSettings {
   /// Constructor that loads settings from Hive storage
   /// This handles type conversion and provides defaults when values aren't found
   AppSettings.fromHive(Box box)
-      : selectedModel = _stringToGeminiModel(box.get('selectedModel') as String?),
-        fontSize = (box.get('fontSize') as num?)?.toDouble() ?? 16.0,
-        diversity = (box.get('diversity') as num?) ?? 0.5,
-        geminiApiKey = (box.get('geminiApiKey') as String?) ?? '';
+    : selectedModel = _stringToGeminiModel(box.get('selectedModel') as String?),
+      fontSize = (box.get('fontSize') as num?)?.toDouble() ?? 16.0,
+      diversity = (box.get('diversity') as num?) ?? 0.5,
+      geminiApiKey = (box.get('geminiApiKey') as String?) ?? '';
 
   /// Helper method to convert string representation to GeminiModel enum
   /// This is needed because Hive can store strings but not enum values directly
@@ -74,10 +74,8 @@ class SettingsController extends ValueNotifier<AppSettings> {
 
   /// Replace all settings at once
   void update(AppSettings newSettings) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      value = newSettings;
-      value.saveToHive(_box);
-    });
+    value = newSettings;
+    value.saveToHive(_box);
   }
 
   /// Update specific settings fields, keeping others unchanged
@@ -94,10 +92,8 @@ class SettingsController extends ValueNotifier<AppSettings> {
       diversity: diversity ?? value.diversity,
       geminiApiKey: geminiApiKey ?? value.geminiApiKey,
     );
-    
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      value = newSettings;
-      value.saveToHive(_box);
-    });
+
+    value = newSettings;
+    value.saveToHive(_box);
   }
 }

@@ -32,9 +32,6 @@ void main() async {
   // Initialize Hive for Flutter with the document directory path
   await Hive.initFlutter(appDocumentDir.path);
 
-  // Open 'settingBox' for app preferences (without type - will be dynamic)
-  await Hive.openBox('settingBox');
-
   // Open 'historyBox' specifically for storing String messages from chat history
   await Hive.openBox<String>('historyBox');
 
@@ -148,9 +145,9 @@ class MyApp extends StatelessWidget {
             // Explicitly define TextTheme to prevent crashes in Typography.material2021()
             // which occur when styles have null fontSize during scaling or inspection.
             textTheme: ThemeData.dark().textTheme.apply(
-                  bodyColor: Colors.white,
-                  displayColor: Colors.white,
-                ),
+              bodyColor: Colors.white,
+              displayColor: Colors.white,
+            ),
           ),
 
           // Home page

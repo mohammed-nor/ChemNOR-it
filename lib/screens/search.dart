@@ -255,16 +255,20 @@ class _SearchWidgetState extends State<SearchWidget> {
       }
     } catch (e) {
       if (!mounted) return;
-      
+
       String displayError = e.toString();
-      
+
       // Clean up common error strings for better user readability
-      if (displayError.contains('HttpException') || displayError.contains('Connection closed')) {
-        displayError = 'Network Connection Issue: PubChem or the AI service closed the connection unexpectedly. This can happen due to unstable internet or temporary service limits. Please try your search again in a moment.';
-      } else if (displayError.contains('NoSuchMethodError') && displayError.contains('[]')) {
-        displayError = 'Data Processing Error: The AI returned an unexpected response format. Try refining your search query or switching the model in Settings.';
+      if (displayError.contains('HttpException') ||
+          displayError.contains('Connection closed')) {
+        displayError =
+            'Network Connection Issue: PubChem or the AI service closed the connection unexpectedly. This can happen due to unstable internet or temporary service limits. Please try your search again in a moment.';
+      } else if (displayError.contains('NoSuchMethodError') &&
+          displayError.contains('[]')) {
+        displayError =
+            'Data Processing Error: The AI returned an unexpected response format. Try refining your search query or switching the model in Settings.';
       }
-      
+
       if (mounted) {
         setState(() {
           _progress = SearchProgress.error;
@@ -291,7 +295,7 @@ class _SearchWidgetState extends State<SearchWidget> {
         if (infoList == null) return '0';
         final information = infoList['Information'];
         if (information == null || (information as List).isEmpty) return '0';
-        
+
         final firstInfo = information[0];
         if (firstInfo is Map && firstInfo.containsKey('PubMedID')) {
           final pubmedIds = firstInfo['PubMedID'] as List?;
@@ -389,17 +393,10 @@ class _SearchWidgetState extends State<SearchWidget> {
           CustomScrollView(
             physics: const ClampingScrollPhysics(),
             slivers: [
-              SliverAppBar(
-                expandedHeight: 50,
-                floating: false,
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                flexibleSpace: FlexibleSpaceBar(
-                  expandedTitleScale: 1.0,
-                  centerTitle: true,
-                  title: RichText(
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 0),
+                  child: RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
                       children: [
@@ -819,22 +816,32 @@ class _SearchWidgetState extends State<SearchWidget> {
                                             Container(
                                               width: 100,
                                               height: 100,
+                                              clipBehavior: Clip.antiAlias,
                                               decoration: BoxDecoration(
-                                                color: Colors.white,
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.08,
+                                                ),
                                                 borderRadius:
                                                     BorderRadius.circular(16),
                                               ),
                                               child: imageUrl != null
-                                                  ? Image.network(
-                                                      imageUrl,
-                                                      fit: BoxFit.contain,
-                                                      errorBuilder: (c, e, s) =>
-                                                          Icon(
-                                                            Icons.science,
-                                                            size: 40,
-                                                          ),
+                                                  ? OverflowBox(
+                                                      maxWidth: 187,
+                                                      maxHeight: 187,
+                                                      child: Image.network(
+                                                        imageUrl,
+                                                        width: 187,
+                                                        height: 187,
+                                                        fit: BoxFit.contain,
+                                                        errorBuilder:
+                                                            (c, e, s) =>
+                                                                const Icon(
+                                                                  Icons.science,
+                                                                  size: 40,
+                                                                ),
+                                                      ),
                                                     )
-                                                  : Icon(
+                                                  : const Icon(
                                                       Icons.science,
                                                       size: 40,
                                                     ),
@@ -1129,21 +1136,30 @@ class _SearchWidgetState extends State<SearchWidget> {
                                       Container(
                                         width: 60,
                                         height: 60,
+                                        clipBehavior: Clip.antiAlias,
                                         decoration: BoxDecoration(
-                                          color: Colors.white,
+                                          color: Colors.white.withValues(
+                                            alpha: 0.08,
+                                          ),
                                           borderRadius: BorderRadius.circular(
                                             12,
                                           ),
                                         ),
                                         child: cid != null
-                                            ? Image.network(
-                                                'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/PNG',
-                                                fit: BoxFit.contain,
-                                                errorBuilder: (_, __, ___) =>
-                                                    const Icon(
-                                                      Icons.science,
-                                                      size: 32,
-                                                    ),
+                                            ? OverflowBox(
+                                                maxWidth: 100,
+                                                maxHeight: 100,
+                                                child: Image.network(
+                                                  'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/PNG',
+                                                  width: 100,
+                                                  height: 100,
+                                                  fit: BoxFit.contain,
+                                                  errorBuilder: (_, __, ___) =>
+                                                      const Icon(
+                                                        Icons.science,
+                                                        size: 32,
+                                                      ),
+                                                ),
                                               )
                                             : const Icon(
                                                 Icons.science,

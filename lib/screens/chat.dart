@@ -427,21 +427,6 @@ class MessageWidget extends StatelessWidget {
             ? MainAxisAlignment.end
             : MainAxisAlignment.start,
         children: [
-          if (isAI)
-            Container(
-              margin: const EdgeInsets.only(right: 8, top: 4),
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor: theme.colorScheme.primary.withValues(
-                  alpha: 0.1,
-                ),
-                child: Icon(
-                  Icons.science_rounded,
-                  size: 18,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ),
           Flexible(
             fit: isAI ? FlexFit.tight : FlexFit.loose,
             child: Container(
@@ -870,48 +855,159 @@ class _ChatPageState extends State<ChatPage> {
         SafeArea(
           child: Scaffold(
             backgroundColor: Colors.transparent,
-            appBar: AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              surfaceTintColor: Colors.transparent,
-              centerTitle: true,
-              title: RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'ChemNOR ',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontSize: baseFontSize + 4.0,
-                      ),
-                    ),
-                    TextSpan(
-                      text: 'it! ',
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        color: Colors.redAccent,
-                        fontSize: baseFontSize,
-                      ),
-                    ),
-                    TextSpan(
-                      text: 'Chat',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: baseFontSize,
-                        fontWeight: FontWeight.w300,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
             body: Padding(
-              padding: const EdgeInsets.all(6.0),
+              padding: const EdgeInsets.only(top: 2),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 2, bottom: 6),
+                      child: RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'ChemNOR ',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: baseFontSize + 4.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'it! ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.redAccent,
+                                fontSize: baseFontSize,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'Chat\n',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: baseFontSize,
+                                fontWeight: FontWeight.w300,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'C',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'hemical ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'H',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'euristic ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'E',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'valuation of ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'M',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'olecules ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'N',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'etworking for ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'O',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'ptimized ',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'R',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'eactivity',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                                fontSize: baseFontSize - 7.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   Expanded(
                     child: ListView.builder(
                       controller: _scrollController,
@@ -1015,7 +1111,7 @@ class MessageBubble extends StatelessWidget {
       child: Container(
         width: !isFromUser ? double.infinity : null,
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.92,
+          maxWidth: MediaQuery.of(context).size.width * 1,
         ),
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
 
@@ -1073,22 +1169,34 @@ class MessageBubble extends StatelessWidget {
                 ),
               ),
             if (text != null)
-              Theme(
-                data: theme.copyWith(
-                  textTheme: theme.textTheme.copyWith(
-                    headlineSmall: TextStyle(fontSize: baseFontSize + 2),
-                    titleLarge: TextStyle(fontSize: baseFontSize + 1),
-                    titleMedium: TextStyle(fontSize: baseFontSize),
-                  ),
+              DefaultTextStyle(
+                style: TextStyle(
+                  fontSize: baseFontSize,
+                  color: isFromUser
+                      ? Colors.white
+                      : theme.textTheme.bodyMedium?.color ?? Colors.white,
+                  height: 1.4,
                 ),
-                child: GptMarkdown(
-                  text!,
-                  useDollarSignsForLatex: true,
-                  style: TextStyle(
-                    fontSize: baseFontSize,
-                    color: isFromUser
-                        ? Colors.white
-                        : theme.textTheme.bodyMedium?.color,
+                child: Theme(
+                  data: theme.copyWith(
+                    textTheme: theme.textTheme.copyWith(
+                      bodySmall: TextStyle(fontSize: baseFontSize),
+                      bodyMedium: TextStyle(fontSize: baseFontSize),
+                      bodyLarge: TextStyle(fontSize: baseFontSize),
+                      headlineSmall: TextStyle(fontSize: baseFontSize + 2),
+                      titleLarge: TextStyle(fontSize: baseFontSize + 1),
+                      titleMedium: TextStyle(fontSize: baseFontSize),
+                    ),
+                  ),
+                  child: GptMarkdown(
+                    text!,
+                    useDollarSignsForLatex: true,
+                    style: TextStyle(
+                      fontSize: baseFontSize,
+                      color: isFromUser
+                          ? Colors.white
+                          : theme.textTheme.bodyMedium?.color,
+                    ),
                   ),
                 ),
               ),

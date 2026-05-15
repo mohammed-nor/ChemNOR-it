@@ -11,9 +11,11 @@
 library;
 
 // Import necessary packages
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart'; // Flutter UI components
 import 'package:flutter/services.dart'; // For clipboard access
 import 'package:gpt_markdown/gpt_markdown.dart'; // For markdown rendering
+import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:hive_flutter/adapters.dart'; // For Hive UI integration
 import 'package:chemnor_it/main.dart'; // Access global settings
 
@@ -45,11 +47,68 @@ class _HistoryWidgetState extends State<HistoryWidget> {
     super.dispose();
   }
 
+  Widget _latexBuilder(
+    BuildContext context,
+    String tex,
+    TextStyle textStyle,
+    bool inline,
+  ) {
+    final effectiveFontSize =
+        textStyle.fontSize ?? settingsController.value.fontSize;
+    final effectiveTextStyle = textStyle.copyWith(fontSize: effectiveFontSize);
+    final mathWidget = Math.tex(
+      tex,
+      textStyle: effectiveTextStyle,
+      settings: const TexParserSettings(strict: Strict.ignore),
+      options: MathOptions(
+        style: inline ? MathStyle.text : MathStyle.display,
+        color:
+            effectiveTextStyle.color ?? Theme.of(context).colorScheme.onSurface,
+        fontSize: effectiveFontSize,
+        mathFontOptions: FontOptions(
+          fontFamily: 'Main',
+          fontWeight: effectiveTextStyle.fontWeight ?? FontWeight.normal,
+          fontShape: FontStyle.normal,
+        ),
+        textFontOptions: FontOptions(
+          fontFamily: 'Main',
+          fontWeight: effectiveTextStyle.fontWeight ?? FontWeight.normal,
+          fontShape: FontStyle.normal,
+        ),
+      ),
+      textScaleFactor: 1,
+      onErrorFallback: (err) {
+        return Text(
+          tex,
+          textDirection: Directionality.of(context),
+          style: effectiveTextStyle.copyWith(
+            color: (!kDebugMode) ? null : Theme.of(context).colorScheme.error,
+          ),
+        );
+      },
+    );
+
+    final breakResult = mathWidget.texBreak(enforceNoBreak: false);
+    if (breakResult.parts.length <= 1) {
+      return mathWidget;
+    }
+
+    // Use runSpacing to approximate 1.5 line-height for wrapped LaTeX lines.
+    final double effectiveFontSizeForSpacing =
+        effectiveTextStyle.fontSize ?? settingsController.value.fontSize;
+    return Wrap(
+      alignment: WrapAlignment.start,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 0,
+      runSpacing: effectiveFontSizeForSpacing * 0.5,
+      children: breakResult.parts,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final baseFontSize = settingsController.value.fontSize;
     final theme = Theme.of(context);
-    final fontSize = settingsController.value.fontSize;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -98,16 +157,10 @@ class _HistoryWidgetState extends State<HistoryWidget> {
           CustomScrollView(
             physics: const ClampingScrollPhysics(),
             slivers: [
-              SliverAppBar(
-                floating: false,
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                flexibleSpace: FlexibleSpaceBar(
-                  expandedTitleScale: 1.0,
-                  centerTitle: true,
-                  title: RichText(
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 0),
+                  child: RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
                       children: [
@@ -362,28 +415,40 @@ class _HistoryWidgetState extends State<HistoryWidget> {
                                       ],
                                     ),
                                     const SizedBox(height: 12),
-                                    Theme(
-                                      data: theme.copyWith(
-                                        textTheme: theme.textTheme.copyWith(
-                                          headlineSmall: TextStyle(
-                                            fontSize: baseFontSize + 2,
+                                    LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        return SizedBox(
+                                          width: constraints.maxWidth,
+                                          child: Theme(
+                                            data: theme.copyWith(
+                                              textTheme: theme.textTheme
+                                                  .copyWith(
+                                                    headlineSmall: TextStyle(
+                                                      fontSize:
+                                                          baseFontSize + 2,
+                                                    ),
+                                                    titleLarge: TextStyle(
+                                                      fontSize:
+                                                          baseFontSize + 1,
+                                                    ),
+                                                    titleMedium: TextStyle(
+                                                      fontSize: baseFontSize,
+                                                    ),
+                                                  ),
+                                            ),
+                                            child: GptMarkdown(
+                                              value ?? '',
+                                              useDollarSignsForLatex: true,
+                                              textAlign: TextAlign.start,
+                                              style: TextStyle(
+                                                fontSize: baseFontSize,
+                                                height: 1.4,
+                                              ),
+                                              latexBuilder: _latexBuilder,
+                                            ),
                                           ),
-                                          titleLarge: TextStyle(
-                                            fontSize: baseFontSize + 1,
-                                          ),
-                                          titleMedium: TextStyle(
-                                            fontSize: baseFontSize,
-                                          ),
-                                        ),
-                                      ),
-                                      child: GptMarkdown(
-                                        value ?? '',
-                                        useDollarSignsForLatex: true,
-                                        style: TextStyle(
-                                          fontSize: baseFontSize,
-                                          height: 1.4,
-                                        ),
-                                      ),
+                                        );
+                                      },
                                     ),
                                     const SizedBox(height: 12),
                                     Text(

@@ -10,10 +10,8 @@ library;
 // Import necessary packages
 import 'package:chem_nor/chem_nor.dart'; // For GeminiModel enum
 import 'package:chemnor_it/main.dart'; // App configuration
-import 'package:chemnor_it/services/chemnor_api.dart'; // For manual re-initialization
 import 'package:flutter/material.dart'; // Flutter UI components
-import 'package:hive/hive.dart'; // For persistent storage access
-import 'package:hive_flutter/hive_flutter.dart'; // For Hive Flutter integration
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // Import local settings controller
@@ -88,6 +86,50 @@ class _SettingsPageState extends State<SettingPage> {
     });
   }
 
+  Future<void> _shareApp() async {
+    const appLink =
+        'https://play.google.com/store/apps/dev?id=6694339020319831911';
+    const message =
+        '📱 Check out ChemNOR it!\n\n🔗 Download the app here:\n$appLink\n\n✨ A smart chemistry assistant for compounds, search, and analysis.';
+
+    try {
+      await Share.share(message, subject: 'ChemNOR it! App');
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open share dialog'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _openEmail() async {
+    final uri = Uri.parse(
+      'mailto:nor.it.services@gmail.com?subject=${Uri.encodeComponent('Check out ChemNOR it!')}&body=${Uri.encodeComponent('I thought you might be interested in ChemNOR it!')}',
+    );
+    try {
+      await launchUrl(uri);
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open email client')),
+      );
+    }
+  }
+
+  Future<void> _openPlayStore() async {
+    final uri = Uri.parse(
+      'https://play.google.com/store/apps/dev?id=6694339020319831911',
+    );
+    try {
+      await launchUrl(uri);
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open Play Store')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final baseFontSize = settingsController.value.fontSize;
@@ -100,93 +142,86 @@ class _SettingsPageState extends State<SettingPage> {
           // Premium Designed Background
           Container(
             decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF0F172A), Color(0xFF020617)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: -100,
-                    right: -100,
-                    child: Container(
-                      width: 400,
-                      height: 400,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF6366F1).withValues(alpha: 0.08),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: -150,
-                    left: -150,
-                    child: Container(
-                      width: 500,
-                      height: 500,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
-                      ),
-                    ),
-                  ),
-                ],
+              gradient: LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -100,
+                  right: -100,
+                  child: Container(
+                    width: 400,
+                    height: 400,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: -150,
+                  left: -150,
+                  child: Container(
+                    width: 500,
+                    height: 500,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
 
           // Content
           CustomScrollView(
             slivers: [
-              SliverAppBar(
-                expandedHeight: 140.0,
-                floating: false,
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                flexibleSpace: FlexibleSpaceBar(
-                  expandedTitleScale: 1.0,
-                  centerTitle: true,
-                  title: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'ChemNOR ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: baseFontSize + 4.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'it! ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.redAccent,
-                            fontSize: baseFontSize,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'Settings',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: baseFontSize,
-                            fontWeight: FontWeight.w300,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(10.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        child: Center(
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'ChemNOR ',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontSize: baseFontSize + 4.0,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: 'it! ',
+                                  style: TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.redAccent,
+                                    fontSize: baseFontSize,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: 'Settings',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: baseFontSize,
+                                    fontWeight: FontWeight.w300,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       // Developer Profile Section
                       _buildSectionTitle('Developer'),
                       Container(
@@ -200,60 +235,95 @@ class _SettingsPageState extends State<SettingPage> {
                         ),
                         child: Column(
                           children: [
-                            Row(
+                            Column(
                               children: [
-                                CircleAvatar(
-                                  radius: 40,
-                                  backgroundColor: theme.colorScheme.primary
-                                      .withOpacity(0.1),
-                                  child: ClipOval(
-                                    child: Image.asset(
-                                      'images/1.png',
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (c, e, s) =>
-                                          Icon(Icons.person, size: 40),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    SizedBox(width: 2),
+
+                                    CircleAvatar(
+                                      radius: 40,
+                                      backgroundColor: theme.colorScheme.primary
+                                          .withOpacity(0.1),
+                                      child: ClipOval(
+                                        child: Image.asset(
+                                          'images/1.png',
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (c, e, s) =>
+                                              Icon(Icons.person, size: 40),
+                                        ),
+                                      ),
+                                    ),
+                                    //const SizedBox(height: 8),
+
+                                    //const SizedBox(width: 20),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'NOR MOHAMMED',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: baseFontSize + 4.0,
+                                          ),
+                                        ),
+                                        Text(
+                                          'NOR It! Team',
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(
+                                              0.5,
+                                            ),
+                                            fontSize: baseFontSize,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(width: 2),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            GridView.count(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                              childAspectRatio: 3.5,
+                              children: [
+                                _buildSocialButton(
+                                  baseFontSize: baseFontSize,
+                                  icon: Icons.link_rounded,
+                                  label: 'GitHub',
+                                  onTap: () => launchUrl(
+                                    Uri.parse(
+                                      "https://github.com/mohammed-nor",
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 20),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'NOR MOHAMMED',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: baseFontSize + 4.0,
-                                        ),
-                                      ),
-                                      Text(
-                                        'nour1608@gmail.com',
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.5),
-                                          fontSize: baseFontSize,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Row(
-                                        children: [
-                                          _buildSocialButton(
-                                            baseFontSize: baseFontSize,
-                                            icon: Icons.link_rounded,
-                                            label: 'GitHub',
-                                            onTap: () => launchUrl(
-                                              Uri.parse(
-                                                "https://github.com/mohammed-nor",
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                                _buildSocialButton(
+                                  baseFontSize: baseFontSize,
+                                  icon: Icons.ios_share_rounded,
+                                  label: 'Share',
+                                  onTap: _shareApp,
+                                ),
+                                _buildSocialButton(
+                                  baseFontSize: baseFontSize,
+                                  icon: Icons.email_rounded,
+                                  label: 'Email',
+                                  onTap: _openEmail,
+                                ),
+                                _buildSocialButton(
+                                  baseFontSize: baseFontSize,
+                                  icon: Icons.storefront_rounded,
+                                  label: 'Play Store',
+                                  onTap: _openPlayStore,
                                 ),
                               ],
                             ),
@@ -378,7 +448,7 @@ class _SettingsPageState extends State<SettingPage> {
                                 Expanded(
                                   child: Slider(
                                     value: _settings.fontSize,
-                                    min: 10.0,
+                                    min: 6.0,
                                     max: 30.0,
                                     activeColor: theme.colorScheme.primary,
                                     onChanged: (double value) =>
@@ -531,7 +601,9 @@ class _SettingsPageState extends State<SettingPage> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(icon, size: 16, color: Colors.white70),
               const SizedBox(width: 8),

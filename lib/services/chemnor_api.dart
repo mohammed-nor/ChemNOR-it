@@ -47,7 +47,8 @@ class ChemnorApi {
       final result = await _currentClient.chat(inputText, '');
       return result ?? 'No response from ChemNOR';
     } catch (e) {
-      if (e.toString().contains('HttpException') || e.toString().contains('Connection closed')) {
+      if (e.toString().contains('HttpException') ||
+          e.toString().contains('Connection closed')) {
         return 'Network Error: Connection lost while talking to AI. Please check your internet and try again.';
       }
       rethrow;
@@ -73,7 +74,9 @@ class ChemnorApi {
         final result = await _currentClient.findListOfCompoundsJSN(description);
         return result ?? '';
       } catch (e) {
-        if (retries == 0 || (!e.toString().contains('HttpException') && !e.toString().contains('Connection closed'))) {
+        if (retries == 0 ||
+            (!e.toString().contains('HttpException') &&
+                !e.toString().contains('Connection closed'))) {
           // If we are out of retries or it's not a network error, rethrow
           rethrow;
         }
@@ -89,19 +92,6 @@ class ChemnorApi {
     // Forward the search request to the package client using the correct method name
     final result = await _currentClient.findListOfCompoundsJSN(description);
     return result ?? '';
-  }
-
-  // Scroll controller used for auto-scrolling chat
-  final ScrollController _scrollController = ScrollController();
-
-  void scrollDown() {
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 750),
-        curve: Curves.easeOutCirc,
-      ),
-    );
   }
 
   void showError(BuildContext context, String message) {
