@@ -10,10 +10,8 @@ library;
 // Import necessary packages
 import 'package:chem_nor/chem_nor.dart'; // For GeminiModel enum
 import 'package:chemnor_it/main.dart'; // App configuration
-import 'package:chemnor_it/services/ChemnorApi.dart'; // For manual re-initialization
 import 'package:flutter/material.dart'; // Flutter UI components
-import 'package:hive/hive.dart'; // For persistent storage access
-import 'package:hive_flutter/hive_flutter.dart'; // For Hive Flutter integration
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // Import local settings controller
@@ -30,39 +28,29 @@ class SettingPage extends StatefulWidget {
 }
 
 /// State class for the settings page
-class _SettingsPageState extends State<SettingPage>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
+class _SettingsPageState extends State<SettingPage> {
   // Store current app settings
   late AppSettings _settings;
+  // Controller for the API key text field - must be state-level to avoid accessibility tree desync
+  late TextEditingController _apiKeyController;
 
-  // Define available LLM models as a list
-  // This shows all available Gemini models that the app can use
-  final List<GeminiModel> llmModels = [
-    GeminiModel.gemini2_5FlashLite,
-    GeminiModel.gemini3_0Flash,
-    GeminiModel.gemini3_0Pro,
-    GeminiModel.gemini2_5Pro,
-    GeminiModel.gemini2_5Flash,
-  ];
+  // Define available LLM models from the chem_nor package, filtering out duplicates
+  final List<GeminiModel> llmModels = () {
+    final seen = <String>{};
+    return GeminiModel.values
+        .where((model) => seen.add(model.apiName))
+        .toList();
+  }();
 
   @override
   // Initialize state when widget is created
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    );
-    _fadeController.forward();
-
     // Get current settings from the controller
     _settings = settingsController.value;
+
+    // Initialize the API key controller once with the current value
+    _apiKeyController = TextEditingController(text: _settings.geminiApiKey);
 
     // Safety check: if selected model isn't in our list, use a default
     if (!llmModels.contains(_settings.selectedModel)) {
@@ -72,7 +60,7 @@ class _SettingsPageState extends State<SettingPage>
 
   @override
   void dispose() {
-    _fadeController.dispose();
+    _apiKeyController.dispose();
     super.dispose();
   }
 
@@ -92,25 +80,54 @@ class _SettingsPageState extends State<SettingPage>
       geminiApiKey: geminiApiKey,
     );
 
-    // Persist changes to Hive
-    final box = Hive.box('settingBox');
-    if (selectedModel != null) {
-      box.put('selectedModel', AppSettings.geminiModelToString(selectedModel));
-    }
-    if (geminiApiKey != null) {
-      box.put('geminiApiKey', geminiApiKey);
-    }
-    if (fontSize != null) {
-      box.put('fontSize', fontSize);
-    }
-    if (diversity != null) {
-      box.put('diversity', diversity);
-    }
-
     // Update local state to reflect changes
     setState(() {
       _settings = settingsController.value;
     });
+  }
+
+  Future<void> _shareApp() async {
+    const appLink =
+        'https://play.google.com/store/apps/dev?id=6694339020319831911';
+    const message =
+        '📱 Check out ChemNOR it!\n\n🔗 Download the app here:\n$appLink\n\n✨ A smart chemistry assistant for compounds, search, and analysis.';
+
+    try {
+      await Share.share(message, subject: 'ChemNOR it! App');
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open share dialog'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _openEmail() async {
+    final uri = Uri.parse(
+      'mailto:nor.it.services@gmail.com?subject=${Uri.encodeComponent('Check out ChemNOR it!')}&body=${Uri.encodeComponent('I thought you might be interested in ChemNOR it!')}',
+    );
+    try {
+      await launchUrl(uri);
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open email client')),
+      );
+    }
+  }
+
+  Future<void> _openPlayStore() async {
+    final uri = Uri.parse(
+      'https://play.google.com/store/apps/dev?id=6694339020319831911',
+    );
+    try {
+      await launchUrl(uri);
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open Play Store')),
+      );
+    }
   }
 
   @override
@@ -123,97 +140,88 @@ class _SettingsPageState extends State<SettingPage>
       body: Stack(
         children: [
           // Premium Designed Background
-          FadeTransition(
-            opacity: _fadeAnimation,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF0F172A), Color(0xFF020617)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -100,
+                  right: -100,
+                  child: Container(
+                    width: 400,
+                    height: 400,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+                    ),
+                  ),
                 ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: -120,
-                    left: -120,
-                    child: Container(
-                      width: 400,
-                      height: 400,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF6366F1).withOpacity(0.08),
-                      ),
+                Positioned(
+                  bottom: -150,
+                  left: -150,
+                  child: Container(
+                    width: 500,
+                    height: 500,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
                     ),
                   ),
-                  Positioned(
-                    bottom: -150,
-                    right: -150,
-                    child: Container(
-                      width: 500,
-                      height: 500,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF4F46E5).withOpacity(0.05),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
 
           // Content
           CustomScrollView(
             slivers: [
-              SliverAppBar(
-                expandedHeight: 140.0,
-                floating: false,
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                flexibleSpace: FlexibleSpaceBar(
-                  centerTitle: true,
-                  title: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'ChemNOR ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: baseFontSize + 4.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'it! ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.redAccent,
-                            fontSize: baseFontSize,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'Settings',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: baseFontSize,
-                            fontWeight: FontWeight.w300,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(10.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        child: Center(
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'ChemNOR ',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontSize: baseFontSize + 4.0,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: 'it! ',
+                                  style: TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.redAccent,
+                                    fontSize: baseFontSize,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: 'Settings',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: baseFontSize,
+                                    fontWeight: FontWeight.w300,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       // Developer Profile Section
                       _buildSectionTitle('Developer'),
                       Container(
@@ -227,60 +235,95 @@ class _SettingsPageState extends State<SettingPage>
                         ),
                         child: Column(
                           children: [
-                            Row(
+                            Column(
                               children: [
-                                CircleAvatar(
-                                  radius: 40,
-                                  backgroundColor: theme.colorScheme.primary
-                                      .withOpacity(0.1),
-                                  child: ClipOval(
-                                    child: Image.asset(
-                                      'images/1.png',
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (c, e, s) =>
-                                          Icon(Icons.person, size: 40),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    SizedBox(width: 2),
+
+                                    CircleAvatar(
+                                      radius: 40,
+                                      backgroundColor: theme.colorScheme.primary
+                                          .withOpacity(0.1),
+                                      child: ClipOval(
+                                        child: Image.asset(
+                                          'images/1.png',
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (c, e, s) =>
+                                              Icon(Icons.person, size: 40),
+                                        ),
+                                      ),
+                                    ),
+                                    //const SizedBox(height: 8),
+
+                                    //const SizedBox(width: 20),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'NOR MOHAMMED',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: baseFontSize + 4.0,
+                                          ),
+                                        ),
+                                        Text(
+                                          'NOR It! Team',
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(
+                                              0.5,
+                                            ),
+                                            fontSize: baseFontSize,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(width: 2),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            GridView.count(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                              childAspectRatio: 3.5,
+                              children: [
+                                _buildSocialButton(
+                                  baseFontSize: baseFontSize,
+                                  icon: Icons.link_rounded,
+                                  label: 'GitHub',
+                                  onTap: () => launchUrl(
+                                    Uri.parse(
+                                      "https://github.com/mohammed-nor",
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 20),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'NOR MOHAMMED',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: baseFontSize + 4.0,
-                                        ),
-                                      ),
-                                      Text(
-                                        'nour1608@gmail.com',
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.5),
-                                          fontSize: baseFontSize,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Row(
-                                        children: [
-                                          _buildSocialButton(
-                                            baseFontSize: baseFontSize,
-                                            icon: Icons.link_rounded,
-                                            label: 'GitHub',
-                                            onTap: () => launchUrl(
-                                              Uri.parse(
-                                                "https://github.com/mohammed-nor",
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                                _buildSocialButton(
+                                  baseFontSize: baseFontSize,
+                                  icon: Icons.ios_share_rounded,
+                                  label: 'Share',
+                                  onTap: _shareApp,
+                                ),
+                                _buildSocialButton(
+                                  baseFontSize: baseFontSize,
+                                  icon: Icons.email_rounded,
+                                  label: 'Email',
+                                  onTap: _openEmail,
+                                ),
+                                _buildSocialButton(
+                                  baseFontSize: baseFontSize,
+                                  icon: Icons.storefront_rounded,
+                                  label: 'Play Store',
+                                  onTap: _openPlayStore,
                                 ),
                               ],
                             ),
@@ -298,6 +341,7 @@ class _SettingsPageState extends State<SettingPage>
                         icon: Icons.psychology_rounded,
                         child: DropdownButtonHideUnderline(
                           child: Container(
+                            width: double.infinity,
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.05),
@@ -311,7 +355,7 @@ class _SettingsPageState extends State<SettingPage>
                                 return DropdownMenuItem<GeminiModel>(
                                   value: model,
                                   child: Text(
-                                    model.name,
+                                    _formatModelName(model.name),
                                     style: TextStyle(fontSize: baseFontSize),
                                   ),
                                 );
@@ -319,10 +363,6 @@ class _SettingsPageState extends State<SettingPage>
                               onChanged: (GeminiModel? newValue) {
                                 if (newValue != null) {
                                   _updateSettings(selectedModel: newValue);
-                                  Hive.box('settingBox').put(
-                                    'selectedModel',
-                                    AppSettings.geminiModelToString(newValue),
-                                  );
                                 }
                               },
                             ),
@@ -340,6 +380,10 @@ class _SettingsPageState extends State<SettingPage>
                             TextField(
                               decoration: InputDecoration(
                                 hintText: 'Enter API Key',
+                                hintStyle: TextStyle(
+                                  fontSize: baseFontSize,
+                                  color: Colors.white54,
+                                ),
                                 prefixIcon: Icon(Icons.key_rounded, size: 20),
                                 suffixIcon: _settings.geminiApiKey.isNotEmpty
                                     ? Icon(
@@ -349,9 +393,7 @@ class _SettingsPageState extends State<SettingPage>
                                       )
                                     : null,
                               ),
-                              controller: TextEditingController(
-                                text: _settings.geminiApiKey,
-                              ),
+                              controller: _apiKeyController,
                               style: TextStyle(fontSize: baseFontSize),
                               onSubmitted: (value) =>
                                   _updateSettings(geminiApiKey: value),
@@ -363,44 +405,19 @@ class _SettingsPageState extends State<SettingPage>
                                   "https://aistudio.google.com/app/api-keys",
                                 ),
                               ),
-                              icon: Icon(Icons.open_in_new_rounded, size: 16),
-                              label: Text('Get API Key'),
+                              icon: Icon(
+                                Icons.open_in_new_rounded,
+                                size: baseFontSize,
+                              ),
+                              label: Text(
+                                'Get API Key',
+                                style: TextStyle(fontSize: baseFontSize),
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: theme.colorScheme.primary
                                     .withOpacity(0.1),
                                 foregroundColor: theme.colorScheme.primary,
                                 minimumSize: const Size(double.infinity, 44),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  ChemnorApi().reinitiate();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'ChemNOR Model Reinitiated!',
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                },
-                                icon: Icon(Icons.refresh_rounded, size: 18),
-                                label: Text('Reinitiate Model'),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                    color: theme.colorScheme.primary
-                                        .withOpacity(0.5),
-                                  ),
-                                  foregroundColor: theme.colorScheme.primary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  minimumSize: const Size(double.infinity, 44),
-                                ),
                               ),
                             ),
                           ],
@@ -431,7 +448,7 @@ class _SettingsPageState extends State<SettingPage>
                                 Expanded(
                                   child: Slider(
                                     value: _settings.fontSize,
-                                    min: 10.0,
+                                    min: 6.0,
                                     max: 30.0,
                                     activeColor: theme.colorScheme.primary,
                                     onChanged: (double value) =>
@@ -467,6 +484,34 @@ class _SettingsPageState extends State<SettingPage>
         ],
       ),
     );
+  }
+
+  /// Formats the enum model name into a human-readable string
+  /// Example: 'gemini2_0Flash' -> 'Gemini 2.0 Flash'
+  String _formatModelName(String name) {
+    // 1. Handle the 'gemini' prefix
+    String formatted = name.replaceFirst('gemini', 'Gemini ');
+
+    // 2. Replace underscores with dots (for versions like 2_0)
+    formatted = formatted.replaceAll('_', '.');
+
+    // 3. Add space before capital letters (e.g., Flash, Pro, Lite)
+    formatted = formatted.replaceAllMapped(
+      RegExp(r'([a-z0-9])([A-Z])'),
+      (Match m) => '${m[1]} ${m[2]}',
+    );
+
+    // 4. Handle edge cases like 'Flashlite' (lowercase 'l')
+    if (formatted.endsWith('lite') && !formatted.endsWith(' Lite')) {
+      formatted = formatted.replaceFirst('lite', ' Lite');
+    }
+
+    // 5. Handle 'live' in 'Flashlive'
+    if (formatted.endsWith('live') && !formatted.endsWith(' Live')) {
+      formatted = formatted.replaceFirst('live', ' Live');
+    }
+
+    return formatted.trim();
   }
 
   Widget _buildSectionTitle(String title, {double baseFontSize = 16.0}) {
@@ -556,7 +601,9 @@ class _SettingsPageState extends State<SettingPage>
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(icon, size: 16, color: Colors.white70),
               const SizedBox(width: 8),

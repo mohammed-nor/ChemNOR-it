@@ -32,23 +32,25 @@ void main() async {
   // Initialize Hive for Flutter with the document directory path
   await Hive.initFlutter(appDocumentDir.path);
 
-  // Open 'settingBox' for app preferences (without type - will be dynamic)
-  await Hive.openBox('settingBox');
-
   // Open 'historyBox' specifically for storing String messages from chat history
   await Hive.openBox<String>('historyBox');
+
+  // Open 'chatBox' for storing the general chat message history
+  await Hive.openBox('chatBox');
+
+  // Open 'savedBox' for storing user-saved compound results
+  await Hive.openBox('savedBox');
 
   // Get reference to settings box for initial setup and controller
   final settingsBox = await Hive.openBox('settingBox');
 
   // Initialize default model if not set already
   if (!settingsBox.containsKey('selectedModel')) {
-    await settingsBox.put('selectedModel', 'gemini1_5flash');
+    await settingsBox.put('selectedModel', 'gemini3_0flash');
   }
 
   // Create the settings controller with the settings box
   settingsController = SettingsController(settingsBox);
-
   // Launch the app with MyApp as the root widget
   runApp(MyApp());
 }
@@ -71,18 +73,20 @@ class MyApp extends StatelessWidget {
 
           // App title shown in task switchers and OS interfaces
           title: 'ChemNOR It!',
+          scrollBehavior: const MaterialScrollBehavior().copyWith(
+            overscroll: false,
+          ),
 
           // Theme configuration
           theme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.dark,
-            
+
             // Custom color scheme for a premium scientific look
             colorScheme: ColorScheme.fromSeed(
               seedColor: const Color(0xFF6366F1), // Indigo primary
               brightness: Brightness.dark,
               surface: const Color(0xFF0F172A), // Deep slate surface
-              background: const Color(0xFF020617), // Near-black background
             ),
 
             // Scaffold background color
@@ -111,9 +115,7 @@ class MyApp extends StatelessWidget {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(
-                  color: Colors.white.withOpacity(0.05),
-                ),
+                borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -133,19 +135,22 @@ class MyApp extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
             ),
 
-            // Text theme refinements
-            textTheme: Theme.of(context).textTheme.apply(
-              fontSizeFactor: settings.fontSize / 16.0,
+            // Explicitly define TextTheme to prevent crashes in Typography.material2021()
+            // which occur when styles have null fontSize during scaling or inspection.
+            textTheme: ThemeData.dark().textTheme.apply(
+              bodyColor: Colors.white,
               displayColor: Colors.white,
-              bodyColor: const Color(0xFFE2E8F0), // Off-white for readability
             ),
           ),
 
-          // Set the home page to MyHomePage with a title
+          // Home page
           home: const MyHomePage(title: 'ChemNOR it!'),
         );
       },

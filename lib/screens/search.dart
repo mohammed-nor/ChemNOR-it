@@ -10,12 +10,14 @@ library;
 import 'package:chemnor_it/main.dart'; // Main app configuration
 import 'dart:convert'; // For JSON processing
 import 'package:flutter/material.dart'; // Flutter UI components
+import 'package:hive/hive.dart';
+import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:url_launcher/url_launcher.dart'; // For launching URLs
 import 'package:http/http.dart' as http; // HTTP requests
 
 // Import local files
 import '../screens/chat.dart'; // For navigation to chat screen
-import '../services/ChemnorApi.dart'; // Add this import
+import '../services/chemnor_api.dart'; // Add this import
 
 // Enum defining the possible states of the search process
 enum SearchProgress {
@@ -38,11 +40,8 @@ class SearchWidget extends StatefulWidget {
 }
 
 // State class for the SearchWidget
-class _SearchWidgetState extends State<SearchWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
-  final ApiSrv = ChemnorApi();
+class _SearchWidgetState extends State<SearchWidget> {
+  final apiSrv = ChemnorApi();
 
   // Track the current search progress state
   SearchProgress _progress = SearchProgress.idle;
@@ -53,20 +52,12 @@ class _SearchWidgetState extends State<SearchWidget>
   @override
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    );
-    _fadeController.forward();
+    _loadSavedCompounds();
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -82,97 +73,208 @@ class _SearchWidgetState extends State<SearchWidget>
   // List to store search results
   List<Map<String, dynamic>> _compoundsResult = [];
 
+  // Saved compounds — persisted in Hive
+  List<Map<String, dynamic>> _savedCompounds = [];
+
   // Error message to display if search fails
   String _errorMessage = '';
+
+  // ── Saved compounds persistence ──────────────────────────────────────────
+
+  /// Load saved compounds from Hive on startup
+  void _loadSavedCompounds() {
+    final box = Hive.box('savedBox');
+    final raw = box.get('saved', defaultValue: <dynamic>[]) as List;
+    setState(() {
+      _savedCompounds = raw
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+    });
+  }
+
+  /// Persist current saved list to Hive
+  void _persistSaved() {
+    Hive.box('savedBox').put(
+      'saved',
+      _savedCompounds.map((c) => Map<String, dynamic>.from(c)).toList(),
+    );
+  }
+
+  /// Returns true if the compound (by cid) is already saved
+  bool _isSaved(Map<String, dynamic> compound) {
+    final cid = compound['cid']?.toString();
+    if (cid == null) return false;
+    return _savedCompounds.any((s) => s['cid']?.toString() == cid);
+  }
+
+  /// Toggle save/unsave for a compound
+  void _toggleSave(Map<String, dynamic> compound) {
+    setState(() {
+      if (_isSaved(compound)) {
+        _savedCompounds.removeWhere(
+          (s) => s['cid']?.toString() == compound['cid']?.toString(),
+        );
+      } else {
+        _savedCompounds.add(Map<String, dynamic>.from(compound));
+      }
+    });
+    _persistSaved();
+  }
+
+  /// Show the saved compounds bottom sheet
+
+  // Strips markdown code fences that Gemini sometimes wraps around JSON
+  String _sanitizeJson(String raw) {
+    // Remove ```json ... ``` or ``` ... ``` wrappers
+    final fenced = RegExp(r'```(?:json)?\s*([\s\S]*?)```', multiLine: true);
+    final match = fenced.firstMatch(raw);
+    if (match != null) return match.group(1)!.trim();
+    return raw.trim();
+  }
+
+  // Safely convert a dynamic list element to Map<String, dynamic>
+  Map<String, dynamic>? _toStringMap(dynamic e) {
+    if (e is Map) {
+      try {
+        return e.map((k, v) => MapEntry(k.toString(), v));
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
 
   // Main search function - performs the API call and processes results
   Future<void> _searchCompounds(String description) async {
     // Update UI to show loading state and reset previous results
-    setState(() {
-      _errorMessage = '';
-      _compoundsResult = [];
-      _progress = SearchProgress.processingPrompt;
-      _progressMessage = 'Processing your search query...';
-    });
+    if (mounted) {
+      setState(() {
+        _errorMessage = '';
+        _compoundsResult = [];
+        _progress = SearchProgress.processingPrompt;
+        _progressMessage = 'Processing your search query...';
+      });
+    }
 
     try {
       // Step 1: Processing prompt - add a small delay for visual feedback
       await Future.delayed(const Duration(milliseconds: 500));
 
       // Update UI to show next stage
-      setState(() {
-        _progress = SearchProgress.fetchingCompounds;
-        _progressMessage =
-            'Fetching compound information... \n using ${settingsController.value.selectedModel.apiName} model \n with the key ${settingsController.value.geminiApiKey.isEmpty ? "" : "configured"}';
-      });
+      if (mounted) {
+        setState(() {
+          _progress = SearchProgress.fetchingCompounds;
+          _progressMessage =
+              'Fetching compound information...\nUsing ${settingsController.value.selectedModel.apiName} model';
+        });
+      }
 
       // Step 2: Fetch compound data from API
-      final resultsString = await ApiSrv.findListOfCompoundsJSN(description);
+      final String rawResult;
+      try {
+        rawResult = await apiSrv.findListOfCompoundsJSN(description);
+      } catch (apiError) {
+        throw Exception('API call failed: $apiError');
+      }
 
       // Handle empty response
-      try {
-        if (resultsString.isEmpty) {
-          throw const FormatException("API returned empty or null response");
-        }
+      if (rawResult.isEmpty) {
+        throw const FormatException(
+          'The AI returned an empty response. Check your API key in Settings.',
+        );
+      }
 
-        // Update UI to show processing stage
+      // Update UI to show processing stage
+      if (mounted) {
         setState(() {
           _progress = SearchProgress.processingResults;
           _progressMessage = 'Processing compound data...';
         });
-      } catch (e) {
-        _progressMessage = 'Error: ${e.toString()}';
       }
 
-      // Step 3: Parse JSON response
-      final decodedJson = jsonDecode(resultsString);
+      // Step 3: Sanitise then parse JSON response
+      // Gemini sometimes wraps JSON in markdown code fences — strip them first
+      final sanitised = _sanitizeJson(rawResult);
 
-      // Process response based on its format (handle different response structures)
+      dynamic decodedJson;
+      try {
+        decodedJson = jsonDecode(sanitised);
+      } on FormatException catch (fe) {
+        throw FormatException(
+          'Could not parse AI response as JSON. '
+          'Raw response (first 200 chars): ${rawResult.substring(0, rawResult.length.clamp(0, 200))}\n'
+          'Parse error: $fe',
+        );
+      }
+
+      // Step 4: Process response based on its format
+      List<dynamic>? compoundList;
+
       if (decodedJson is Map<String, dynamic> &&
           decodedJson.containsKey('retrieved_compounds')) {
-        // Format 1: Results in 'retrieved_compounds' field
+        // Format 1: { "retrieved_compounds": [...] }
         final compounds = decodedJson['retrieved_compounds'];
         if (compounds is List) {
-          // Update UI with results
-          setState(() {
-            _compoundsResult = compounds.cast<Map<String, dynamic>>();
-            _progress = SearchProgress.complete;
-            _progressMessage = 'Found ${_compoundsResult.length} compounds';
-          });
+          compoundList = compounds;
         } else {
-          throw const FormatException("retrieved_compounds is not a list");
+          throw const FormatException(
+            '"retrieved_compounds" field is not a list.',
+          );
         }
       } else if (decodedJson is List) {
-        // Format 2: Results as direct list
-        setState(() {
-          _compoundsResult = decodedJson.cast<Map<String, dynamic>>();
-          _progress = SearchProgress.complete;
-          _progressMessage = 'Found ${_compoundsResult.length} compounds';
-        });
+        // Format 2: Direct list [...]
+        compoundList = decodedJson;
       } else if (decodedJson is Map<String, dynamic> &&
           decodedJson.containsKey('error')) {
-        // Format 3: Error message in response
-        setState(() {
-          _progress = SearchProgress.error;
-          _errorMessage = 'Error: ${decodedJson['error']}';
-        });
+        // Format 3: { "error": "..." }
+        throw Exception('API error: ${decodedJson['error']}');
       } else {
-        // Unknown format
-        throw const FormatException("API returned an unexpected JSON format");
+        throw FormatException(
+          'Unexpected JSON structure. Got: ${decodedJson.runtimeType}',
+        );
+      }
+
+      // Safely convert each element — skip any that are not Maps
+      final parsed = compoundList
+          .map(_toStringMap)
+          .whereType<Map<String, dynamic>>()
+          .toList();
+
+      if (parsed.isEmpty) {
+        throw const FormatException(
+          'No valid compound entries found in the response.',
+        );
+      }
+
+      if (mounted) {
+        setState(() {
+          _compoundsResult = parsed;
+          _progress = SearchProgress.complete;
+          _progressMessage = 'Found ${_compoundsResult.length} compound(s)';
+        });
       }
     } catch (e) {
-      // Handle any exceptions that occur during the search process
-      if (!mounted) {
-        return; // Prevent updating state if widget is no longer in tree
-      }
-      setState(() {
-        _progress = SearchProgress.error;
-        _errorMessage = 'Error: ${e.toString()}';
-      });
-    } finally {
-      // Update loading state when done (success or error)
       if (!mounted) return;
-      setState(() {});
+
+      String displayError = e.toString();
+
+      // Clean up common error strings for better user readability
+      if (displayError.contains('HttpException') ||
+          displayError.contains('Connection closed')) {
+        displayError =
+            'Network Connection Issue: PubChem or the AI service closed the connection unexpectedly. This can happen due to unstable internet or temporary service limits. Please try your search again in a moment.';
+      } else if (displayError.contains('NoSuchMethodError') &&
+          displayError.contains('[]')) {
+        displayError =
+            'Data Processing Error: The AI returned an unexpected response format. Try refining your search query or switching the model in Settings.';
+      }
+
+      if (mounted) {
+        setState(() {
+          _progress = SearchProgress.error;
+          _errorMessage = displayError;
+        });
+      }
     }
   }
 
@@ -189,12 +291,20 @@ class _SearchWidgetState extends State<SearchWidget>
       if (response.statusCode == 200) {
         // Parse response to count publications
         final data = jsonDecode(response.body);
-        final pubmedIds =
-            data['InformationList']['Information'][0]['PubMedID'] as List?;
-        return pubmedIds?.length.toString() ?? '0';
+        final infoList = data['InformationList'];
+        if (infoList == null) return '0';
+        final information = infoList['Information'];
+        if (information == null || (information as List).isEmpty) return '0';
+
+        final firstInfo = information[0];
+        if (firstInfo is Map && firstInfo.containsKey('PubMedID')) {
+          final pubmedIds = firstInfo['PubMedID'] as List?;
+          return pubmedIds?.length.toString() ?? '0';
+        }
+        return '0';
       }
     } catch (e) {
-      print('Error fetching publication count: $e');
+      // Silent catch or use proper logging
     }
     return 'N/A'; // Default value if fetch fails
   }
@@ -228,8 +338,8 @@ class _SearchWidgetState extends State<SearchWidget>
   }
 
   @override
-  // Build the UI for the search widget
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final baseFontSize = settingsController.value.fontSize;
     // Get user preferences from settings controller
     final fontSize = settingsController.value.fontSize;
@@ -240,61 +350,53 @@ class _SearchWidgetState extends State<SearchWidget>
       body: Stack(
         children: [
           // Premium Designed Background
-          FadeTransition(
-            opacity: _fadeAnimation,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF0F172A), Color(0xFF020617)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Stack(
+              children: [
+                // Subtle glowing orbs for depth
+                Positioned(
+                  top: -100,
+                  right: -100,
+                  child: Container(
+                    width: 400,
+                    height: 400,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+                    ),
+                  ),
                 ),
-              ),
-              child: Stack(
-                children: [
-                  // Subtle glowing orbs for depth
-                  Positioned(
-                    top: -100,
-                    right: -100,
-                    child: Container(
-                      width: 400,
-                      height: 400,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF6366F1).withOpacity(0.08),
-                      ),
+                Positioned(
+                  bottom: -150,
+                  left: -150,
+                  child: Container(
+                    width: 500,
+                    height: 500,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
                     ),
                   ),
-                  Positioned(
-                    bottom: -150,
-                    left: -150,
-                    child: Container(
-                      width: 500,
-                      height: 500,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF4F46E5).withOpacity(0.05),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
 
           // Main Content
           CustomScrollView(
+            physics: const ClampingScrollPhysics(),
             slivers: [
-              SliverAppBar(
-                expandedHeight: 180.0,
-                floating: false,
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                flexibleSpace: FlexibleSpaceBar(
-                  centerTitle: true,
-                  title: RichText(
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 0),
+                  child: RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
                       children: [
@@ -441,17 +543,31 @@ class _SearchWidgetState extends State<SearchWidget>
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(10.0),
                   child: Column(
                     children: [
                       // Search text field
                       TextField(
                         controller: _searchController,
+                        style: TextStyle(
+                          fontSize: baseFontSize,
+                          color: Colors.white,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Describe compound properties...',
-                          prefixIcon: Icon(Icons.search_rounded),
+                          hintStyle: TextStyle(
+                            fontSize: baseFontSize,
+                            color: Colors.white54,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search_rounded,
+                            size: baseFontSize + 4,
+                          ),
                           suffixIcon: IconButton(
-                            icon: Icon(Icons.auto_awesome_rounded),
+                            icon: Icon(
+                              Icons.auto_awesome_rounded,
+                              size: baseFontSize + 2,
+                            ),
                             onPressed: () {
                               if (_searchController.text.isNotEmpty) {
                                 _searchCompounds(_searchController.text);
@@ -465,71 +581,194 @@ class _SearchWidgetState extends State<SearchWidget>
                           }
                         },
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+                      // ── No API key warning banner ────────────────────────
+                      if (apiKey.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: Colors.amber.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: Colors.amber,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'No API key configured. '
+                                    'Get a free key from Google AI Studio to use ChemNOR.',
+                                    style: TextStyle(
+                                      color: Colors.amber.withValues(
+                                        alpha: 0.85,
+                                      ),
+                                      fontSize: fontSize - 2,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                GestureDetector(
+                                  onTap: () => launchUrl(
+                                    Uri.parse(
+                                      'https://aistudio.google.com/app/api-keys',
+                                    ),
+                                    mode: LaunchMode.externalApplication,
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: Colors.amber.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Get Key',
+                                      style: TextStyle(
+                                        color: Colors.amber,
+                                        fontSize: baseFontSize - 5,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
 
-                      // Progress indicator section - shown during active search
+                      // ── Progress / Error / Results ──────────────────────
+
+                      // Active search progress (not idle, not done, not error)
                       if (_progress != SearchProgress.idle &&
-                          _progress != SearchProgress.complete)
+                          _progress != SearchProgress.complete &&
+                          _progress != SearchProgress.error)
                         Column(
                           children: [
-                            // Progress bar
+                            const SizedBox(height: 20),
                             LinearProgressIndicator(
-                              value: _progress == SearchProgress.error
-                                  ? 1.0
-                                  : null,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                _progress == SearchProgress.error
-                                    ? Colors.red
-                                    : Theme.of(context).colorScheme.primary,
+                                Theme.of(context).colorScheme.primary,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            // Progress message
                             Text(
                               _progressMessage,
                               style: TextStyle(
-                                color: _progress == SearchProgress.error
-                                    ? Colors.red
-                                    : Colors.grey[200],
+                                color: Colors.grey[200],
                                 fontStyle: FontStyle.italic,
                               ),
                             ),
-                            // Step indicator with icon (if not in error state)
-                            if (_progress != SearchProgress.error)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      _getProgressIcon(_progress),
-                                      size: 16,
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    _getProgressIcon(_progress),
+                                    size: 16,
+                                    color: Colors.grey[400],
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _getProgressStep(_progress),
+                                    style: TextStyle(
                                       color: Colors.grey[400],
+                                      fontSize: baseFontSize - 2.0,
                                     ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      _getProgressStep(_progress),
-                                      style: TextStyle(
-                                        color: Colors.grey[400],
-                                        fontSize: baseFontSize - 2.0,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
+                            ),
                           ],
                         )
-                      // Error message display
-                      else if (_errorMessage.isNotEmpty)
-                        Text(
-                          _errorMessage,
-                          style: TextStyle(color: Colors.red),
-                        )
+                      // Error card — always visible when progress == error
+                      else if (_progress == SearchProgress.error)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.red.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.error_outline_rounded,
+                                    color: Colors.redAccent,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Search Failed',
+                                    style: TextStyle(
+                                      color: Colors.redAccent,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: baseFontSize,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              SelectableText(
+                                _errorMessage,
+                                style: TextStyle(
+                                  color: Colors.red[200],
+                                  fontSize: baseFontSize - 2,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              TextButton.icon(
+                                onPressed: () => setState(() {
+                                  _progress = SearchProgress.idle;
+                                  _errorMessage = '';
+                                }),
+                                icon: const Icon(
+                                  Icons.refresh_rounded,
+                                  size: 16,
+                                ),
+                                label: const Text('Dismiss'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.redAccent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       // Results display - list of compound cards
-                      else if (_compoundsResult.isNotEmpty)
+                      // Results display - list of compound cards
+                      if (_compoundsResult.isNotEmpty)
                         ListView.builder(
-                          shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
                           itemCount: _compoundsResult.length,
                           itemBuilder: (context, index) {
                             final compound = _compoundsResult[index];
@@ -544,7 +783,7 @@ class _SearchWidgetState extends State<SearchWidget>
                                 borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
+                                    color: Colors.black.withValues(alpha: 0.2),
                                     blurRadius: 15,
                                     offset: const Offset(0, 8),
                                   ),
@@ -577,22 +816,32 @@ class _SearchWidgetState extends State<SearchWidget>
                                             Container(
                                               width: 100,
                                               height: 100,
+                                              clipBehavior: Clip.antiAlias,
                                               decoration: BoxDecoration(
-                                                color: Colors.white,
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.08,
+                                                ),
                                                 borderRadius:
                                                     BorderRadius.circular(16),
                                               ),
                                               child: imageUrl != null
-                                                  ? Image.network(
-                                                      imageUrl,
-                                                      fit: BoxFit.contain,
-                                                      errorBuilder: (c, e, s) =>
-                                                          Icon(
-                                                            Icons.science,
-                                                            size: 40,
-                                                          ),
+                                                  ? OverflowBox(
+                                                      maxWidth: 187,
+                                                      maxHeight: 187,
+                                                      child: Image.network(
+                                                        imageUrl,
+                                                        width: 187,
+                                                        height: 187,
+                                                        fit: BoxFit.contain,
+                                                        errorBuilder:
+                                                            (c, e, s) =>
+                                                                const Icon(
+                                                                  Icons.science,
+                                                                  size: 40,
+                                                                ),
+                                                      ),
                                                     )
-                                                  : Icon(
+                                                  : const Icon(
                                                       Icons.science,
                                                       size: 40,
                                                     ),
@@ -610,17 +859,40 @@ class _SearchWidgetState extends State<SearchWidget>
                                                     style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      fontSize: baseFontSize + 4.0,
+                                                      fontSize:
+                                                          baseFontSize + 4.0,
                                                       color: Colors.white,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 4),
-                                                  Text(
-                                                    'ID: ${compound['cid'] ?? 'N/A'}',
-                                                    style: TextStyle(
-                                                      color: Colors.white
-                                                          .withOpacity(0.5),
-                                                      fontSize: baseFontSize - 2.0,
+                                                  Theme(
+                                                    data: theme.copyWith(
+                                                      textTheme: theme.textTheme
+                                                          .copyWith(
+                                                            headlineSmall:
+                                                                TextStyle(
+                                                                  fontSize:
+                                                                      baseFontSize +
+                                                                      2,
+                                                                ),
+                                                            titleLarge: TextStyle(
+                                                              fontSize:
+                                                                  baseFontSize +
+                                                                  1,
+                                                            ),
+                                                            titleMedium: TextStyle(
+                                                              fontSize:
+                                                                  baseFontSize,
+                                                            ),
+                                                          ),
+                                                    ),
+                                                    child: GptMarkdown(
+                                                      'ID: ${compound['cid'] ?? 'N/A'}',
+                                                      style: TextStyle(
+                                                        fontSize:
+                                                            baseFontSize - 2.0,
+                                                        color: Colors.white,
+                                                      ),
                                                     ),
                                                   ),
                                                   const SizedBox(height: 8),
@@ -636,17 +908,23 @@ class _SearchWidgetState extends State<SearchWidget>
                                                               vertical: 4,
                                                             ),
                                                         decoration: BoxDecoration(
-                                                          color: const Color(
-                                                            0xFF6366F1,
-                                                          ).withOpacity(0.1),
+                                                          color:
+                                                              const Color(
+                                                                0xFF6366F1,
+                                                              ).withValues(
+                                                                alpha: 0.1,
+                                                              ),
                                                           borderRadius:
                                                               BorderRadius.circular(
                                                                 8,
                                                               ),
                                                           border: Border.all(
-                                                            color: const Color(
-                                                              0xFF6366F1,
-                                                            ).withOpacity(0.3),
+                                                            color:
+                                                                const Color(
+                                                                  0xFF6366F1,
+                                                                ).withValues(
+                                                                  alpha: 0.3,
+                                                                ),
                                                           ),
                                                         ),
                                                         child: Row(
@@ -657,9 +935,10 @@ class _SearchWidgetState extends State<SearchWidget>
                                                               Icons
                                                                   .article_outlined,
                                                               size: 14,
-                                                              color: Color(
-                                                                0xFF6366F1,
-                                                              ),
+                                                              color:
+                                                                  const Color(
+                                                                    0xFF6366F1,
+                                                                  ),
                                                             ),
                                                             const SizedBox(
                                                               width: 4,
@@ -667,10 +946,13 @@ class _SearchWidgetState extends State<SearchWidget>
                                                             Text(
                                                               '${snapshot.data ?? "..."} Citations',
                                                               style: TextStyle(
-                                                                fontSize: baseFontSize - 3.0,
-                                                                color: Color(
-                                                                  0xFF818CF8,
-                                                                ),
+                                                                fontSize:
+                                                                    baseFontSize -
+                                                                    3.0,
+                                                                color:
+                                                                    const Color(
+                                                                      0xFF818CF8,
+                                                                    ),
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .w600,
@@ -706,7 +988,9 @@ class _SearchWidgetState extends State<SearchWidget>
                                                       ),
                                                   decoration: BoxDecoration(
                                                     color: Colors.white
-                                                        .withOpacity(0.05),
+                                                        .withValues(
+                                                          alpha: 0.05,
+                                                        ),
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                           10,
@@ -715,7 +999,8 @@ class _SearchWidgetState extends State<SearchWidget>
                                                   child: Text(
                                                     '${e.key}: ${e.value}',
                                                     style: TextStyle(
-                                                      fontSize: baseFontSize - 2.0,
+                                                      fontSize:
+                                                          baseFontSize - 2.0,
                                                     ),
                                                   ),
                                                 ),
@@ -747,9 +1032,7 @@ class _SearchWidgetState extends State<SearchWidget>
                                                   Icons.school_rounded,
                                                   size: 18,
                                                 ),
-                                                label: Text(
-                                                  'Scholar search',
-                                                ),
+                                                label: Text('Scholar search'),
                                                 style: ElevatedButton.styleFrom(
                                                   backgroundColor: const Color(
                                                     0xFF6366F1,
@@ -761,14 +1044,32 @@ class _SearchWidgetState extends State<SearchWidget>
                                                 ),
                                               ),
                                             ),
-                                            const SizedBox(width: 12),
+                                            const SizedBox(width: 8),
+                                            // Save / bookmark toggle
                                             IconButton.filledTonal(
-                                              onPressed:
-                                                  () {}, // Potential for more actions
-                                              icon: Icon(
-                                                Icons.share_rounded,
-                                                size: 20,
+                                              onPressed: () =>
+                                                  _toggleSave(compound),
+                                              style: IconButton.styleFrom(
+                                                backgroundColor:
+                                                    _isSaved(compound)
+                                                    ? const Color(0xFF6366F1)
+                                                    : Colors.white.withValues(
+                                                        alpha: 0.07,
+                                                      ),
                                               ),
+                                              icon: Icon(
+                                                _isSaved(compound)
+                                                    ? Icons.bookmark_rounded
+                                                    : Icons
+                                                          .bookmark_border_rounded,
+                                                size: 20,
+                                                color: _isSaved(compound)
+                                                    ? Colors.white
+                                                    : Colors.white54,
+                                              ),
+                                              tooltip: _isSaved(compound)
+                                                  ? 'Remove from saved'
+                                                  : 'Save compound',
                                             ),
                                           ],
                                         ),
@@ -779,10 +1080,142 @@ class _SearchWidgetState extends State<SearchWidget>
                               ),
                             );
                           },
-                        )
-                      // Empty state - no results yet
-                      else
-                        Text(''),
+                        ),
+
+                      // ── Saved Compounds Section ─────────────────────────
+                      if (_savedCompounds.isNotEmpty) ...[
+                        const SizedBox(height: 32),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.bookmark_rounded,
+                              color: Color(0xFF6366F1),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Saved Compounds (${_savedCompounds.length})',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: baseFontSize + 2.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        ListView.separated(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.only(bottom: 40),
+                          itemCount: _savedCompounds.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (ctx, i) {
+                            final c = _savedCompounds[i];
+                            final cid = c['cid']?.toString();
+                            return Material(
+                              color: Colors.white.withValues(alpha: 0.04),
+                              borderRadius: BorderRadius.circular(20),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(20),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          ChatWidget(compoundData: c),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(14),
+                                  child: Row(
+                                    children: [
+                                      // Molecule thumbnail
+                                      Container(
+                                        width: 60,
+                                        height: 60,
+                                        clipBehavior: Clip.antiAlias,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.08,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: cid != null
+                                            ? OverflowBox(
+                                                maxWidth: 100,
+                                                maxHeight: 100,
+                                                child: Image.network(
+                                                  'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/PNG',
+                                                  width: 100,
+                                                  height: 100,
+                                                  fit: BoxFit.contain,
+                                                  errorBuilder: (_, __, ___) =>
+                                                      const Icon(
+                                                        Icons.science,
+                                                        size: 32,
+                                                      ),
+                                                ),
+                                              )
+                                            : const Icon(
+                                                Icons.science,
+                                                size: 32,
+                                              ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      // Name & CID
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              c['name'] ?? 'Unknown',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: baseFontSize,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            if (cid != null)
+                                              Text(
+                                                'CID: $cid',
+                                                style: TextStyle(
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.4),
+                                                  fontSize: baseFontSize - 4,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                      // Remove button
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.bookmark_remove_rounded,
+                                          color: Colors.redAccent,
+                                          size: 22,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _savedCompounds.removeAt(i);
+                                          });
+                                          _persistSaved();
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ],
                   ),
                 ),

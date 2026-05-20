@@ -31,12 +31,21 @@ class AppSettings {
     : selectedModel = _stringToGeminiModel(box.get('selectedModel') as String?),
       fontSize = (box.get('fontSize') as num?)?.toDouble() ?? 16.0,
       diversity = (box.get('diversity') as num?) ?? 0.5,
-      geminiApiKey = (box.get('geminiapikey') as String?) ?? '';
+      geminiApiKey = (box.get('geminiApiKey') as String?) ?? '';
 
   /// Helper method to convert string representation to GeminiModel enum
   /// This is needed because Hive can store strings but not enum values directly
   static GeminiModel _stringToGeminiModel(String? modelString) {
-    return GeminiModel.gemini2_5Pro; // Use default model
+    if (modelString == null) return GeminiModel.gemini2_5Pro;
+    try {
+      // Find matching enum value by comparing lowercase string representations
+      return GeminiModel.values.firstWhere(
+        (m) => geminiModelToString(m) == modelString.toLowerCase(),
+        orElse: () => GeminiModel.gemini2_5Pro,
+      );
+    } catch (_) {
+      return GeminiModel.gemini2_5Pro;
+    }
   }
 
   /// Helper method to convert GeminiModel enum to string for storage
@@ -51,7 +60,7 @@ class AppSettings {
     box.put('selectedModel', AppSettings.geminiModelToString(selectedModel));
     box.put('fontSize', fontSize);
     box.put('diversity', diversity);
-    box.put('geminiapikey', geminiApiKey);
+    box.put('geminiApiKey', geminiApiKey);
   }
 }
 
@@ -65,9 +74,8 @@ class SettingsController extends ValueNotifier<AppSettings> {
 
   /// Replace all settings at once
   void update(AppSettings newSettings) {
-    value = newSettings; // Update the value
-    value.saveToHive(_box); // Save to storage
-    notifyListeners(); // Notify listeners about the change
+    value = newSettings;
+    value.saveToHive(_box);
   }
 
   /// Update specific settings fields, keeping others unchanged
@@ -78,14 +86,14 @@ class SettingsController extends ValueNotifier<AppSettings> {
     num? diversity,
     String? geminiApiKey,
   }) {
-    // Create new settings object with updated fields
-    value = AppSettings(
+    final newSettings = AppSettings(
       selectedModel: selectedModel ?? value.selectedModel,
       fontSize: fontSize ?? value.fontSize,
       diversity: diversity ?? value.diversity,
       geminiApiKey: geminiApiKey ?? value.geminiApiKey,
     );
-    value.saveToHive(_box); // Save to storage
-    notifyListeners(); // Notify listeners about the change
+
+    value = newSettings;
+    value.saveToHive(_box);
   }
 }

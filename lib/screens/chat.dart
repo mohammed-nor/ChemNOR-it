@@ -14,7 +14,7 @@ import 'package:chemnor_it/main.dart'; // Flutter UI components
 // For clipboard functionality
 import 'package:gpt_markdown/gpt_markdown.dart'; // For markdown rendering
 import 'package:hive/hive.dart'; // Local storage
-import '../services/ChemnorApi.dart'; // API service for AI interaction
+import '../services/chemnor_api.dart'; // API service for AI interaction
 // App settings
 
 /// Compound-specific chat widget that can be initialized with compound data
@@ -26,15 +26,11 @@ class ChatWidget extends StatefulWidget {
   const ChatWidget({super.key, this.compoundData});
 
   @override
-  // Create state for this widget
-  _ChatWidgetState createState() => _ChatWidgetState();
+  State<ChatWidget> createState() => _ChatWidgetState();
 }
 
 /// State class for the compound-specific chat widget
-class _ChatWidgetState extends State<ChatWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
+class _ChatWidgetState extends State<ChatWidget> {
   // Scroll controller for the chat messages list
   final ScrollController _scrollController = ScrollController();
 
@@ -52,22 +48,12 @@ class _ChatWidgetState extends State<ChatWidget>
   bool _loading = false;
 
   // API service for communication with backend
-  ChemnorApi ApiSrv = ChemnorApi();
+  final ChemnorApi apiSrv = ChemnorApi();
 
   @override
   // Initialize state when widget is created
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    );
-    _fadeController.forward();
-
     // If compound data is provided, send an initial message about it
     if (widget.compoundData != null) {
       // Format compound data as a string
@@ -87,7 +73,6 @@ class _ChatWidgetState extends State<ChatWidget>
 
   @override
   void dispose() {
-    _fadeController.dispose();
     _scrollController.dispose();
     _textController.dispose();
     _textFieldFocus.dispose();
@@ -129,7 +114,7 @@ class _ChatWidgetState extends State<ChatWidget>
       _generatedContent.add((image: null, text: message, fromUser: false));
 
       // Fetch response from API
-      final response = await ApiSrv.fetchResponse(contextText);
+      final response = await apiSrv.fetchResponse(contextText);
 
       // Process response text
       final text = processAIText(response);
@@ -140,13 +125,15 @@ class _ChatWidgetState extends State<ChatWidget>
       }
 
       // Update UI state
-      setState(() {
-        _loading = false; // Hide loading indicator
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false; // Hide loading indicator
+        });
+      }
     } catch (e) {
       // Handle errors
       if (mounted) {
-        ApiSrv.showError(context, e.toString());
+        apiSrv.showError(context, e.toString());
         setState(() {
           _loading = false; // Hide loading indicator
         });
@@ -160,6 +147,7 @@ class _ChatWidgetState extends State<ChatWidget>
     final textFieldDecoration = InputDecoration(
       contentPadding: const EdgeInsets.all(15),
       hintText: 'Enter a prompt...',
+      hintStyle: TextStyle(fontSize: baseFontSize, color: Colors.white54),
       border: OutlineInputBorder(
         borderRadius: const BorderRadius.all(Radius.circular(14)),
         borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary),
@@ -169,64 +157,99 @@ class _ChatWidgetState extends State<ChatWidget>
         borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary),
       ),
     );
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          title: Text(
-            widget.compoundData?['name'] != null
-                ? 'Chat: ${widget.compoundData!['name']}'
-                : 'Chat',
-            style: TextStyle(
-              fontSize: baseFontSize + 4.0,
-              fontWeight: FontWeight.bold,
+    return Stack(
+      children: [
+        // Premium Designed Background
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0F172A), Color(0xFF020617)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-        ),
-        body: Stack(
-          children: [
-            // Premium Designed Background
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF0F172A), Color(0xFF020617)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+          child: Stack(
+            children: [
+              Positioned(
+                top: -100,
+                right: -100,
+                child: Container(
+                  width: 400,
+                  height: 400,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.08),
                   ),
                 ),
-                child: Stack(
+              ),
+              Positioned(
+                bottom: -150,
+                left: -150,
+                child: Container(
+                  width: 500,
+                  height: 500,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        SafeArea(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              surfaceTintColor: Colors.transparent,
+              centerTitle: true,
+              title: RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
                   children: [
-                    Positioned(
-                      top: 100,
-                      right: -100,
-                      child: Container(
-                        width: 400,
-                        height: 400,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFF6366F1).withOpacity(0.06),
-                        ),
+                    TextSpan(
+                      text: 'ChemNOR ',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: baseFontSize + 4.0,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'it! ',
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: Colors.redAccent,
+                        fontSize: baseFontSize,
+                      ),
+                    ),
+                    TextSpan(
+                      text: widget.compoundData?['name'] != null
+                          ? 'Chat: ${widget.compoundData!['name']}'
+                          : 'Chat',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: baseFontSize,
+                        fontWeight: FontWeight.w300,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-
-            // Chat Content
-            Padding(
-              padding: const EdgeInsets.all(8.0),
+            body: Padding(
+              padding: const EdgeInsets.all(0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: ListView.builder(
+                      physics: const ClampingScrollPhysics(),
                       controller: _scrollController,
                       itemBuilder: (context, idx) {
                         final content = _generatedContent[idx];
@@ -239,15 +262,25 @@ class _ChatWidgetState extends State<ChatWidget>
                       itemCount: _generatedContent.length,
                     ),
                   ),
-                  Padding(
+                  Container(
                     padding: const EdgeInsets.symmetric(
-                      vertical: 25,
-                      horizontal: 15,
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
                     ),
                     child: Row(
                       children: [
                         Expanded(
                           child: TextField(
+                            style: TextStyle(
+                              fontSize: baseFontSize,
+                              color: Colors.white,
+                            ),
                             autofocus: true,
                             focusNode: _textFieldFocus,
                             decoration: textFieldDecoration,
@@ -256,38 +289,7 @@ class _ChatWidgetState extends State<ChatWidget>
                           ),
                         ),
                         const SizedBox.square(dimension: 15),
-                        IconButton(
-                          onPressed: !_loading
-                              ? () async {
-                                  // Chemistry-related action: call chemist method from ChemnorApi
-                                  if (widget.compoundData != null &&
-                                      widget.compoundData!['cid'] != null) {
-                                    final cid = widget.compoundData!['cid']
-                                        .toString();
-                                    final result = await ApiSrv.chemist(cid);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Chemist result: $result',
-                                        ),
-                                      ),
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('No compound selected.'),
-                                      ),
-                                    );
-                                  }
-                                }
-                              : null,
-                          icon: Icon(
-                            Icons.science, // Chemistry-related icon
-                            color: _loading
-                                ? Theme.of(context).colorScheme.secondary
-                                : Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
+
                         if (!_loading)
                           IconButton(
                             onPressed: () async {
@@ -295,6 +297,7 @@ class _ChatWidgetState extends State<ChatWidget>
                             },
                             icon: Icon(
                               Icons.send,
+                              size: baseFontSize + 4,
                               color: Theme.of(context).colorScheme.primary,
                             ),
                           )
@@ -306,9 +309,9 @@ class _ChatWidgetState extends State<ChatWidget>
                 ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -355,7 +358,7 @@ class _ChatWidgetState extends State<ChatWidget>
           "Answer the following question about the compound above:\n$message";
 
       // Get response from API
-      final response = await ApiSrv.fetchResponse(prompt);
+      final response = await apiSrv.fetchResponse(prompt);
 
       // Process and add response to chat
       final processedResponse = processAIText(response);
@@ -366,27 +369,31 @@ class _ChatWidgetState extends State<ChatWidget>
       ));
 
       // Update UI state
-      setState(() {
-        _loading = false; // Hide loading indicator
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false; // Hide loading indicator
+        });
+      }
 
       // Scroll to bottom after a short delay
       await Future.delayed(const Duration(milliseconds: 100));
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      if (mounted && _scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
     } catch (e) {
       // Handle errors
-      ApiSrv.showError(context, e.toString());
-      setState(() {
-        _loading = false; // Hide loading indicator
-      });
+      if (mounted) {
+        apiSrv.showError(context, e.toString());
+        setState(() {
+          _loading = false; // Hide loading indicator
+        });
+      }
     } finally {
       // Clear input field and set focus for next message
-      _textController.clear();
-      _textFieldFocus.requestFocus();
+      if (mounted) {
+        _textController.clear();
+        _textFieldFocus.requestFocus();
+      }
     }
   }
 }
@@ -420,20 +427,8 @@ class MessageWidget extends StatelessWidget {
             ? MainAxisAlignment.end
             : MainAxisAlignment.start,
         children: [
-          if (isAI)
-            Container(
-              margin: const EdgeInsets.only(right: 8, top: 4),
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                child: Icon(
-                  Icons.science_rounded,
-                  size: 18,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ),
           Flexible(
+            fit: isAI ? FlexFit.tight : FlexFit.loose,
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
@@ -444,7 +439,7 @@ class MessageWidget extends StatelessWidget {
                         end: Alignment.bottomRight,
                       )
                     : null,
-                color: isAI ? theme.colorScheme.surface : null,
+                color: isAI ? const Color(0xFF1E293B) : null,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(20),
                   topRight: const Radius.circular(20),
@@ -453,27 +448,75 @@ class MessageWidget extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
                 border: isAI
-                    ? Border.all(color: Colors.white.withOpacity(0.05))
+                    ? Border.all(color: Colors.white.withValues(alpha: 0.05))
                     : null,
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (isAI)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(
+                              0xFF6366F1,
+                            ).withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.science_rounded,
+                              size: baseFontSize - 4.0,
+                              color: const Color(0xFF6366F1),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'ChemNOR AI',
+                              style: TextStyle(
+                                fontSize: baseFontSize - 4.0,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF6366F1),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   if (text != null)
-                    GptMarkdown(
-                      text!,
-                      style: TextStyle(
-                        color: isFromUser
-                            ? Colors.white
-                            : theme.textTheme.bodyMedium?.color,
-                        fontSize: baseFontSize + 1.0,
-                        height: 1.4,
+                    Theme(
+                      data: theme.copyWith(
+                        textTheme: theme.textTheme.copyWith(
+                          headlineSmall: TextStyle(fontSize: baseFontSize + 2),
+                          titleLarge: TextStyle(fontSize: baseFontSize + 1),
+                          titleMedium: TextStyle(fontSize: baseFontSize),
+                        ),
+                      ),
+                      child: GptMarkdown(
+                        text!,
+                        useDollarSignsForLatex: true,
+                        style: TextStyle(
+                          color: isFromUser
+                              ? Colors.white
+                              : theme.textTheme.bodyMedium?.color,
+                          fontSize: baseFontSize,
+                          height: 1.4,
+                        ),
                       ),
                     ),
                   if (isAI && text != null) ...[
@@ -488,15 +531,17 @@ class MessageWidget extends StatelessWidget {
                             onTap: () async {
                               final box = Hive.box<String>('historyBox');
                               await box.add(text!);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Saved to history!'),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Saved to history!'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
                             },
                             child: Padding(
-                              padding: EdgeInsets.all(4.0),
+                              padding: const EdgeInsets.all(4.0),
                               child: Icon(
                                 Icons.bookmark_add_outlined,
                                 color: Colors.amber,
@@ -517,7 +562,9 @@ class MessageWidget extends StatelessWidget {
               margin: const EdgeInsets.only(left: 8, top: 4),
               child: CircleAvatar(
                 radius: 16,
-                backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
+                backgroundColor: theme.colorScheme.secondary.withValues(
+                  alpha: 0.1,
+                ),
                 child: Icon(
                   Icons.person_rounded,
                   size: 18,
@@ -536,14 +583,11 @@ class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
 
   @override
-  _ChatPageState createState() => _ChatPageState();
+  State<ChatPage> createState() => _ChatPageState();
 }
 
 /// State class for the general chat page
-class _ChatPageState extends State<ChatPage>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
+class _ChatPageState extends State<ChatPage> {
   // Scroll controller for the chat messages list
   final ScrollController _scrollController = ScrollController();
 
@@ -567,41 +611,94 @@ class _ChatPageState extends State<ChatPage>
   // Initialize state when widget is created
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    );
-    _fadeController.forward();
+    // Load messages from disk or send welcome message if none exist
+    _loadMessages();
+  }
 
-    // Send welcome message when chat is opened
-    _sendWelcomeMessage();
+  /// Load messages from Hive box
+  void _loadMessages() {
+    final box = Hive.box('chatBox');
+    final savedMessages = box.get('history', defaultValue: []) as List;
+
+    if (savedMessages.isEmpty) {
+      _sendWelcomeMessage();
+    } else {
+      if (!mounted) return;
+      setState(() {
+        for (final msg in savedMessages) {
+          if (msg is Map) {
+            final data = Map<String, dynamic>.from(msg);
+            _chatMessages.add((
+              image: null,
+              text: data['text'] as String?,
+              fromUser: data['fromUser'] as bool? ?? false,
+            ));
+          }
+        }
+      });
+
+      // Scroll to bottom after loading
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _scrollController.hasClients) {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        }
+      });
+    }
+  }
+
+  /// Save messages to Hive box
+  void _saveMessages() {
+    final box = Hive.box('chatBox');
+    final dataToSave = _chatMessages
+        .map((msg) => {'text': msg.text, 'fromUser': msg.fromUser})
+        .toList();
+    box.put('history', dataToSave);
+  }
+
+  /// Clear the chat history
+  Future<void> _clearChat() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Conversation?'),
+        content: const Text('This will delete all messages in this chat.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() {
+        _chatMessages.clear();
+      });
+      _saveMessages();
+      _sendWelcomeMessage();
+    }
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
     _scrollController.dispose();
     _textController.dispose();
     _textFieldFocus.dispose();
     super.dispose();
   }
 
-  @override
-  // Update when dependencies change (e.g., settings)
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Get the latest API key from Hive
-    final currentKey =
-        (Hive.box('settingBox').get('geminiapikey') as String?) ?? '';
-    // Update API service if key has changed
-    if (apiService.apikey != currentKey) {
-      apiService.apikey = currentKey;
-    }
-  }
+  // NOTE: didChangeDependencies is intentionally omitted here.
+  // ChemnorApi already auto-syncs with settingsController via its internal
+  // addListener(_updateClient) call in the constructor, so no manual sync
+  // is needed. Calling apiService.apikey= during didChangeDependencies
+  // triggered settingsController.updateField → notifyListeners during build,
+  // which caused a "setState during build" crash.
 
   /// Send initial welcome message from the AI
   Future<void> _sendWelcomeMessage() async {
@@ -618,10 +715,13 @@ class _ChatPageState extends State<ChatPage>
       final response = await apiService.fetchResponse(welcomePrompt);
 
       // Add response to chat
-      setState(() {
-        _chatMessages.add((image: null, text: response, fromUser: false));
-        _loading = false; // Hide loading indicator
-      });
+      if (mounted) {
+        setState(() {
+          _chatMessages.add((image: null, text: response, fromUser: false));
+          _loading = false; // Hide loading indicator
+        });
+        _saveMessages();
+      }
     } catch (e) {
       // Handle errors
       if (mounted) {
@@ -641,6 +741,7 @@ class _ChatPageState extends State<ChatPage>
       _loading = true;
       _chatMessages.add((image: null, text: message, fromUser: true));
     });
+    _saveMessages();
 
     _textController.clear();
     _textFieldFocus.requestFocus();
@@ -670,84 +771,21 @@ class _ChatPageState extends State<ChatPage>
 
       final response = await apiService.fetchResponse(prompt);
 
-      setState(() {
-        _chatMessages.add((image: null, text: response, fromUser: false));
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _chatMessages.add((image: null, text: response, fromUser: false));
+          _loading = false;
+        });
+        _saveMessages();
+      }
 
       // Scroll to bottom after a short delay
       await Future.delayed(const Duration(milliseconds: 100));
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      if (mounted && _scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
     } catch (e) {
-      apiService.showError(context, e.toString());
-      setState(() {
-        _loading = false;
-      });
-    }
-  }
-
-  Future<void> _useChemistFunction() async {
-    // Show dialog to get CID input
-    final TextEditingController cidController = TextEditingController();
-    final String? cid = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Chemical Application'),
-        content: TextField(
-          decoration: const InputDecoration(
-            hintText: 'Enter the chemical application you desired',
-          ),
-          controller: cidController,
-          //keyboardType: TextInputType.number,
-          onSubmitted: (value) => Navigator.of(context).pop(value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(cidController.text),
-            child: Text('Submit'),
-          ),
-        ],
-      ),
-    );
-
-    if (cid != null && cid.isNotEmpty) {
-      setState(() {
-        _loading = true;
-        _chatMessages.add((
-          image: null,
-          text: "Brainstorming on: $cid...",
-          fromUser: false,
-        ));
-      });
-
-      try {
-        final result = await apiService.chemist(cid);
-
-        setState(() {
-          _chatMessages.add((
-            image: null,
-            text: "Chemical analysis result:\n$result",
-            fromUser: false,
-          ));
-          _loading = false;
-        });
-
-        // Scroll to bottom
-        await Future.delayed(const Duration(milliseconds: 100));
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      } catch (e) {
+      if (mounted) {
         apiService.showError(context, e.toString());
         setState(() {
           _loading = false;
@@ -762,6 +800,7 @@ class _ChatPageState extends State<ChatPage>
     final textFieldDecoration = InputDecoration(
       contentPadding: const EdgeInsets.all(15),
       hintText: 'Type a message...',
+      hintStyle: TextStyle(fontSize: baseFontSize, color: Colors.white54),
       border: OutlineInputBorder(
         borderRadius: const BorderRadius.all(Radius.circular(14)),
         borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary),
@@ -772,50 +811,59 @@ class _ChatPageState extends State<ChatPage>
       ),
     );
 
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
-            // Premium Designed Background
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF0F172A), Color(0xFF020617)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+    return Stack(
+      children: [
+        // Premium Designed Background
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0F172A), Color(0xFF020617)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                top: -100,
+                right: -100,
+                child: Container(
+                  width: 400,
+                  height: 400,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.08),
                   ),
                 ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      bottom: 100,
-                      left: -100,
-                      child: Container(
-                        width: 400,
-                        height: 400,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFF4F46E5).withOpacity(0.06),
-                        ),
-                      ),
-                    ),
-                  ],
+              ),
+              Positioned(
+                bottom: -150,
+                left: -150,
+                child: Container(
+                  width: 500,
+                  height: 500,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
+                  ),
                 ),
               ),
-            ),
+            ],
+          ),
+        ),
 
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+        SafeArea(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Padding(
+              padding: const EdgeInsets.only(top: 2),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      RichText(
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 2, bottom: 6),
+                      child: RichText(
                         textAlign: TextAlign.center,
                         text: TextSpan(
                           children: [
@@ -958,9 +1006,7 @@ class _ChatPageState extends State<ChatPage>
                           ],
                         ),
                       ),
-
-                      const SizedBox(height: 20),
-                    ],
+                    ),
                   ),
                   Expanded(
                     child: ListView.builder(
@@ -982,37 +1028,64 @@ class _ChatPageState extends State<ChatPage>
                       child: CircularProgressIndicator(),
                     ),
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      IconButton.filledTonal(
-                        onPressed: !_loading ? _useChemistFunction : null,
-                        icon: Icon(Icons.science_rounded),
-                        tooltip: 'Chemist Function',
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 6,
+                      horizontal: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(6),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          focusNode: _textFieldFocus,
-                          controller: _textController,
-                          decoration: textFieldDecoration,
-                          onSubmitted: (value) => _sendMessage(value),
+                    ),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: _clearChat,
+                          icon: Icon(
+                            Icons.refresh_rounded,
+                            size: baseFontSize + 2,
+                          ),
+                          tooltip: 'Reinitialize Chat',
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.redAccent,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton.filled(
-                        onPressed: !_loading
-                            ? () => _sendMessage(_textController.text)
-                            : null,
-                        icon: Icon(Icons.send_rounded),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            style: TextStyle(
+                              fontSize: baseFontSize,
+                              color: Colors.white,
+                            ),
+                            focusNode: _textFieldFocus,
+                            controller: _textController,
+                            decoration: textFieldDecoration,
+                            onSubmitted: (value) => _sendMessage(value),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: !_loading
+                              ? () => _sendMessage(_textController.text)
+                              : null,
+                          icon: Icon(
+                            Icons.send_rounded,
+                            size: baseFontSize + 4,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -1031,25 +1104,102 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final baseFontSize = settingsController.value.fontSize;
     return Align(
       alignment: isFromUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
+        width: !isFromUser ? double.infinity : null,
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width,
+          maxWidth: MediaQuery.of(context).size.width * 1,
         ),
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-        padding: const EdgeInsets.all(6),
+
         decoration: BoxDecoration(
           color: isFromUser
               ? const Color.fromARGB(255, 40, 0, 114)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
+              : const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
+        padding: const EdgeInsets.all(12),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (text != null) GptMarkdown(text!),
+            if (!isFromUser)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.science_rounded,
+                        size: baseFontSize - 4.0,
+                        color: const Color(0xFF6366F1),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'ChemNOR AI',
+                        style: TextStyle(
+                          fontSize: baseFontSize - 4.0,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF6366F1),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            if (text != null)
+              DefaultTextStyle(
+                style: TextStyle(
+                  fontSize: baseFontSize,
+                  color: isFromUser
+                      ? Colors.white
+                      : theme.textTheme.bodyMedium?.color ?? Colors.white,
+                  height: 1.4,
+                ),
+                child: Theme(
+                  data: theme.copyWith(
+                    textTheme: theme.textTheme.copyWith(
+                      bodySmall: TextStyle(fontSize: baseFontSize),
+                      bodyMedium: TextStyle(fontSize: baseFontSize),
+                      bodyLarge: TextStyle(fontSize: baseFontSize),
+                      headlineSmall: TextStyle(fontSize: baseFontSize + 2),
+                      titleLarge: TextStyle(fontSize: baseFontSize + 1),
+                      titleMedium: TextStyle(fontSize: baseFontSize),
+                    ),
+                  ),
+                  child: GptMarkdown(
+                    text!,
+                    useDollarSignsForLatex: true,
+                    style: TextStyle(
+                      fontSize: baseFontSize,
+                      color: isFromUser
+                          ? Colors.white
+                          : theme.textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                ),
+              ),
             if (!isFromUser && text != null)
               Align(
                 alignment: Alignment.centerRight,
@@ -1058,9 +1208,11 @@ class MessageBubble extends StatelessWidget {
                   onPressed: () async {
                     final box = Hive.box<String>('historyBox');
                     await box.add(text!);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Saved to history!')),
-                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Saved to history!')),
+                      );
+                    }
                   },
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
