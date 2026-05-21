@@ -110,369 +110,375 @@ class _HistoryWidgetState extends State<HistoryWidget> {
     final baseFontSize = settingsController.value.fontSize;
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
-        children: [
-          // Premium Designed Background
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF0F172A), Color(0xFF020617)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -100,
-                  right: -100,
-                  child: Container(
-                    width: 400,
-                    height: 400,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF6366F1).withValues(alpha: 0.08),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: -150,
-                  left: -150,
-                  child: Container(
-                    width: 500,
-                    height: 500,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Content
-          CustomScrollView(
-            physics: const ClampingScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 0),
-                  child: RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'ChemNOR ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: baseFontSize + 4.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'it! ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.redAccent,
-                            fontSize: baseFontSize,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'History\n',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: baseFontSize,
-                            fontWeight: FontWeight.w300,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'C',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'hemical ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'H',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'euristic ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'E',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'valuation of ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'M',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'olecules ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'N',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'etworking for ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'O',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'ptimized ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'R',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'eactivity',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
+            // Premium Designed Background
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
               ),
-              ValueListenableBuilder(
-                valueListenable: _historyBox.listenable(),
-                builder: (context, Box<String> box, _) {
-                  if (box.isEmpty) {
-                    return SliverFillRemaining(
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.history_rounded,
-                              size: 64,
-                              color: Colors.white.withOpacity(0.1),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No saved messages yet',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.4),
-                                fontSize: baseFontSize + 2.0,
-                              ),
-                            ),
-                          ],
-                        ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -100,
+                    right: -100,
+                    child: Container(
+                      width: 400,
+                      height: 400,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF6366F1).withValues(alpha: 0.08),
                       ),
-                    );
-                  }
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -150,
+                    left: -150,
+                    child: Container(
+                      width: 500,
+                      height: 500,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-                  return SliverPadding(
-                    padding: const EdgeInsets.all(6.0),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate((context, idx) {
-                        final key = box.keyAt(idx);
-                        final value = box.get(key);
+            // Content
+            CustomScrollView(
+              physics: const ClampingScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 0),
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'ChemNOR ',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: baseFontSize + 4.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'it! ',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.redAccent,
+                              fontSize: baseFontSize,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'History\n',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: baseFontSize,
+                              fontWeight: FontWeight.w300,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'C',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'hemical ',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'H',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'euristic ',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'E',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'valuation of ',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'M',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'olecules ',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'N',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'etworking for ',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'O',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'ptimized ',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'R',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'eactivity',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                ValueListenableBuilder(
+                  valueListenable: _historyBox.listenable(),
+                  builder: (context, Box<String> box, _) {
+                    if (box.isEmpty) {
+                      return SliverFillRemaining(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.history_rounded,
+                                size: 64,
+                                color: Colors.white.withOpacity(0.1),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No saved messages yet',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.4),
+                                  fontSize: baseFontSize + 2.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          child: Card(
-                            clipBehavior: Clip.antiAlias,
-                            child: InkWell(
-                              onLongPress: value != null
-                                  ? () {
-                                      Clipboard.setData(
-                                        ClipboardData(text: value),
-                                      );
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Copied to clipboard!'),
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
-                                      );
-                                    }
-                                  : null,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: theme.colorScheme.primary
-                                                .withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
+                    return SliverPadding(
+                      padding: const EdgeInsets.all(6.0),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate((context, idx) {
+                          final key = box.keyAt(idx);
+                          final value = box.get(key);
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            child: Card(
+                              clipBehavior: Clip.antiAlias,
+                              child: InkWell(
+                                onLongPress: value != null
+                                    ? () {
+                                        Clipboard.setData(
+                                          ClipboardData(text: value),
+                                        );
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Copied to clipboard!',
                                             ),
+                                            behavior: SnackBarBehavior.floating,
                                           ),
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.bookmark_rounded,
-                                                size: 14,
-                                                color:
-                                                    theme.colorScheme.primary,
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                'Saved Item',
-                                                style: TextStyle(
-                                                  fontSize: baseFontSize - 3.0,
-                                                  fontWeight: FontWeight.bold,
+                                        );
+                                      }
+                                    : null,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: theme.colorScheme.primary
+                                                  .withOpacity(0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.bookmark_rounded,
+                                                  size: 14,
                                                   color:
                                                       theme.colorScheme.primary,
                                                 ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: Icon(
-                                            Icons.delete_outline_rounded,
-                                            color: Colors.redAccent,
-                                            size: 20,
-                                          ),
-                                          onPressed: () => box.delete(key),
-                                          constraints: const BoxConstraints(),
-                                          padding: EdgeInsets.zero,
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    LayoutBuilder(
-                                      builder: (context, constraints) {
-                                        return SizedBox(
-                                          width: constraints.maxWidth,
-                                          child: Theme(
-                                            data: theme.copyWith(
-                                              textTheme: theme.textTheme
-                                                  .copyWith(
-                                                    headlineSmall: TextStyle(
-                                                      fontSize:
-                                                          baseFontSize + 2,
-                                                    ),
-                                                    titleLarge: TextStyle(
-                                                      fontSize:
-                                                          baseFontSize + 1,
-                                                    ),
-                                                    titleMedium: TextStyle(
-                                                      fontSize: baseFontSize,
-                                                    ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  'Saved Item',
+                                                  style: TextStyle(
+                                                    fontSize:
+                                                        baseFontSize - 3.0,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: theme
+                                                        .colorScheme
+                                                        .primary,
                                                   ),
-                                            ),
-                                            child: GptMarkdown(
-                                              value ?? '',
-                                              useDollarSignsForLatex: true,
-                                              textAlign: TextAlign.start,
-                                              style: TextStyle(
-                                                fontSize: baseFontSize,
-                                                height: 1.4,
-                                              ),
-                                              latexBuilder: _latexBuilder,
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                        );
-                                      },
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      'Long press to copy content',
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.2),
-                                        fontSize: baseFontSize - 7.0,
-                                        fontStyle: FontStyle.italic,
+                                          IconButton(
+                                            icon: Icon(
+                                              Icons.delete_outline_rounded,
+                                              color: Colors.redAccent,
+                                              size: 20,
+                                            ),
+                                            onPressed: () => box.delete(key),
+                                            constraints: const BoxConstraints(),
+                                            padding: EdgeInsets.zero,
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 12),
+                                      LayoutBuilder(
+                                        builder: (context, constraints) {
+                                          return SizedBox(
+                                            width: constraints.maxWidth,
+                                            child: Theme(
+                                              data: theme.copyWith(
+                                                textTheme: theme.textTheme
+                                                    .copyWith(
+                                                      headlineSmall: TextStyle(
+                                                        fontSize:
+                                                            baseFontSize + 2,
+                                                      ),
+                                                      titleLarge: TextStyle(
+                                                        fontSize:
+                                                            baseFontSize + 1,
+                                                      ),
+                                                      titleMedium: TextStyle(
+                                                        fontSize: baseFontSize,
+                                                      ),
+                                                    ),
+                                              ),
+                                              child: GptMarkdown(
+                                                value ?? '',
+                                                useDollarSignsForLatex: true,
+                                                textAlign: TextAlign.start,
+                                                style: TextStyle(
+                                                  fontSize: baseFontSize,
+                                                  height: 1.4,
+                                                ),
+                                                latexBuilder: _latexBuilder,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'Long press to copy content',
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.2),
+                                          fontSize: baseFontSize - 7.0,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      }, childCount: box.length),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
+                          );
+                        }, childCount: box.length),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

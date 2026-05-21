@@ -345,884 +345,886 @@ class _SearchWidgetState extends State<SearchWidget> {
     final fontSize = settingsController.value.fontSize;
     final apiKey = settingsController.value.geminiApiKey;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent, // Background handled by the Stack
-      body: Stack(
-        children: [
-          // Premium Designed Background
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF0F172A), Color(0xFF020617)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Stack(
-              children: [
-                // Subtle glowing orbs for depth
-                Positioned(
-                  top: -100,
-                  right: -100,
-                  child: Container(
-                    width: 400,
-                    height: 400,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF6366F1).withValues(alpha: 0.08),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: -150,
-                  left: -150,
-                  child: Container(
-                    width: 500,
-                    height: 500,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Main Content
-          CustomScrollView(
-            physics: const ClampingScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 0),
-                  child: RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'ChemNOR ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: baseFontSize + 4.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'it! ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.redAccent,
-                            fontSize: baseFontSize,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'Explore\n',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: baseFontSize,
-                            fontWeight: FontWeight.w300,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'C',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'hemical ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'H',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'euristic ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'E',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'valuation of ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'M',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'olecules ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'N',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'etworking for ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'O',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'ptimized ',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'R',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'eactivity',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                            fontSize: baseFontSize - 7.0,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.transparent, // Background handled by the Stack
+        body: Stack(
+          children: [
+            // Premium Designed Background
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
               ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Column(
-                    children: [
-                      // Search text field
-                      TextField(
-                        controller: _searchController,
-                        style: TextStyle(
-                          fontSize: baseFontSize,
-                          color: Colors.white,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Describe compound properties...',
-                          hintStyle: TextStyle(
-                            fontSize: baseFontSize,
-                            color: Colors.white54,
-                          ),
-                          prefixIcon: Icon(
-                            Icons.search_rounded,
-                            size: baseFontSize + 4,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              Icons.auto_awesome_rounded,
-                              size: baseFontSize + 2,
-                            ),
-                            onPressed: () {
-                              if (_searchController.text.isNotEmpty) {
-                                _searchCompounds(_searchController.text);
-                              }
-                            },
-                          ),
-                        ),
-                        onSubmitted: (value) {
-                          if (value.isNotEmpty) {
-                            _searchCompounds(value);
-                          }
-                        },
+              child: Stack(
+                children: [
+                  // Subtle glowing orbs for depth
+                  Positioned(
+                    top: -100,
+                    right: -100,
+                    child: Container(
+                      width: 400,
+                      height: 400,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF6366F1).withValues(alpha: 0.08),
                       ),
-                      const SizedBox(height: 16),
-                      // ── No API key warning banner ────────────────────────
-                      if (apiKey.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 16),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -150,
+                    left: -150,
+                    child: Container(
+                      width: 500,
+                      height: 500,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+      
+            // Main Content
+            CustomScrollView(
+              physics: const ClampingScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 0),
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'ChemNOR ',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: baseFontSize + 4.0,
                             ),
-                            decoration: BoxDecoration(
-                              color: Colors.amber.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: Colors.amber.withValues(alpha: 0.35),
+                          ),
+                          TextSpan(
+                            text: 'it! ',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.redAccent,
+                              fontSize: baseFontSize,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'Explore\n',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: baseFontSize,
+                              fontWeight: FontWeight.w300,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'C',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'hemical ',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'H',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'euristic ',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'E',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'valuation of ',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'M',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'olecules ',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'N',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'etworking for ',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'O',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'ptimized ',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'R',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'eactivity',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                              fontSize: baseFontSize - 7.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Column(
+                      children: [
+                        // Search text field
+                        TextField(
+                          controller: _searchController,
+                          style: TextStyle(
+                            fontSize: baseFontSize,
+                            color: Colors.white,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Describe compound properties...',
+                            hintStyle: TextStyle(
+                              fontSize: baseFontSize,
+                              color: Colors.white54,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              size: baseFontSize + 4,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                Icons.auto_awesome_rounded,
+                                size: baseFontSize + 2,
                               ),
+                              onPressed: () {
+                                if (_searchController.text.isNotEmpty) {
+                                  _searchCompounds(_searchController.text);
+                                }
+                              },
                             ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.warning_amber_rounded,
-                                  color: Colors.amber,
-                                  size: 20,
+                          ),
+                          onSubmitted: (value) {
+                            if (value.isNotEmpty) {
+                              _searchCompounds(value);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        // ── No API key warning banner ────────────────────────
+                        if (apiKey.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: Colors.amber.withValues(alpha: 0.35),
                                 ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    'No API key configured. '
-                                    'Get a free key from Google AI Studio to use ChemNOR.',
-                                    style: TextStyle(
-                                      color: Colors.amber.withValues(
-                                        alpha: 0.85,
-                                      ),
-                                      fontSize: fontSize - 2,
-                                      height: 1.4,
-                                    ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: Colors.amber,
+                                    size: 20,
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                GestureDetector(
-                                  onTap: () => launchUrl(
-                                    Uri.parse(
-                                      'https://aistudio.google.com/app/api-keys',
-                                    ),
-                                    mode: LaunchMode.externalApplication,
-                                  ),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.amber.withValues(
-                                        alpha: 0.15,
-                                      ),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      'No API key configured. '
+                                      'Get a free key from Google AI Studio to use ChemNOR.',
+                                      style: TextStyle(
                                         color: Colors.amber.withValues(
-                                          alpha: 0.4,
+                                          alpha: 0.85,
+                                        ),
+                                        fontSize: fontSize - 2,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () => launchUrl(
+                                      Uri.parse(
+                                        'https://aistudio.google.com/app/api-keys',
+                                      ),
+                                      mode: LaunchMode.externalApplication,
+                                    ),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber.withValues(
+                                          alpha: 0.15,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: Colors.amber.withValues(
+                                            alpha: 0.4,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Get Key',
+                                        style: TextStyle(
+                                          color: Colors.amber,
+                                          fontSize: baseFontSize - 5,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ),
-                                    child: Text(
-                                      'Get Key',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+      
+                        // ── Progress / Error / Results ──────────────────────
+      
+                        // Active search progress (not idle, not done, not error)
+                        if (_progress != SearchProgress.idle &&
+                            _progress != SearchProgress.complete &&
+                            _progress != SearchProgress.error)
+                          Column(
+                            children: [
+                              const SizedBox(height: 20),
+                              LinearProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _progressMessage,
+                                style: TextStyle(
+                                  color: Colors.grey[200],
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      _getProgressIcon(_progress),
+                                      size: 16,
+                                      color: Colors.grey[400],
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _getProgressStep(_progress),
                                       style: TextStyle(
-                                        color: Colors.amber,
-                                        fontSize: baseFontSize - 5,
-                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[400],
+                                        fontSize: baseFontSize - 2.0,
                                       ),
                                     ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        // Error card — always visible when progress == error
+                        else if (_progress == SearchProgress.error)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.red.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline_rounded,
+                                      color: Colors.redAccent,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Search Failed',
+                                      style: TextStyle(
+                                        color: Colors.redAccent,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: baseFontSize,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                SelectableText(
+                                  _errorMessage,
+                                  style: TextStyle(
+                                    color: Colors.red[200],
+                                    fontSize: baseFontSize - 2,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                TextButton.icon(
+                                  onPressed: () => setState(() {
+                                    _progress = SearchProgress.idle;
+                                    _errorMessage = '';
+                                  }),
+                                  icon: const Icon(
+                                    Icons.refresh_rounded,
+                                    size: 16,
+                                  ),
+                                  label: const Text('Dismiss'),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.redAccent,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
-
-                      // ── Progress / Error / Results ──────────────────────
-
-                      // Active search progress (not idle, not done, not error)
-                      if (_progress != SearchProgress.idle &&
-                          _progress != SearchProgress.complete &&
-                          _progress != SearchProgress.error)
-                        Column(
-                          children: [
-                            const SizedBox(height: 20),
-                            LinearProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _progressMessage,
-                              style: TextStyle(
-                                color: Colors.grey[200],
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    _getProgressIcon(_progress),
-                                    size: 16,
-                                    color: Colors.grey[400],
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _getProgressStep(_progress),
-                                    style: TextStyle(
-                                      color: Colors.grey[400],
-                                      fontSize: baseFontSize - 2.0,
+                        // Results display - list of compound cards
+                        // Results display - list of compound cards
+                        if (_compoundsResult.isNotEmpty)
+                          ListView.builder(
+                            physics: const NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            itemCount: _compoundsResult.length,
+                            itemBuilder: (context, index) {
+                              final compound = _compoundsResult[index];
+                              final cid = compound['cid']?.toString();
+                              final imageUrl = cid != null
+                                  ? 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/PNG'
+                                  : null;
+      
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 20),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(24),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.2),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 8),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        )
-                      // Error card — always visible when progress == error
-                      else if (_progress == SearchProgress.error)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.red.withValues(alpha: 0.4),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.error_outline_rounded,
-                                    color: Colors.redAccent,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Search Failed',
-                                    style: TextStyle(
-                                      color: Colors.redAccent,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: baseFontSize,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              SelectableText(
-                                _errorMessage,
-                                style: TextStyle(
-                                  color: Colors.red[200],
-                                  fontSize: baseFontSize - 2,
+                                  ],
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              TextButton.icon(
-                                onPressed: () => setState(() {
-                                  _progress = SearchProgress.idle;
-                                  _errorMessage = '';
-                                }),
-                                icon: const Icon(
-                                  Icons.refresh_rounded,
-                                  size: 16,
-                                ),
-                                label: const Text('Dismiss'),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Colors.redAccent,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      // Results display - list of compound cards
-                      // Results display - list of compound cards
-                      if (_compoundsResult.isNotEmpty)
-                        ListView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: _compoundsResult.length,
-                          itemBuilder: (context, index) {
-                            final compound = _compoundsResult[index];
-                            final cid = compound['cid']?.toString();
-                            final imageUrl = cid != null
-                                ? 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/PNG'
-                                : null;
-
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 20),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(24),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.2),
-                                    blurRadius: 15,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
-                              ),
-                              child: Card(
-                                margin: EdgeInsets.zero,
-                                clipBehavior: Clip.antiAlias,
-                                child: InkWell(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            ChatWidget(compoundData: compound),
-                                      ),
-                                    );
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            // Image Section
-                                            Container(
-                                              width: 100,
-                                              height: 100,
-                                              clipBehavior: Clip.antiAlias,
-                                              decoration: BoxDecoration(
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.08,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(16),
-                                              ),
-                                              child: imageUrl != null
-                                                  ? OverflowBox(
-                                                      maxWidth: 187,
-                                                      maxHeight: 187,
-                                                      child: Image.network(
-                                                        imageUrl,
-                                                        width: 187,
-                                                        height: 187,
-                                                        fit: BoxFit.contain,
-                                                        errorBuilder:
-                                                            (c, e, s) =>
-                                                                const Icon(
-                                                                  Icons.science,
-                                                                  size: 40,
-                                                                ),
-                                                      ),
-                                                    )
-                                                  : const Icon(
-                                                      Icons.science,
-                                                      size: 40,
-                                                    ),
-                                            ),
-                                            const SizedBox(width: 16),
-                                            // Title & Basic Info
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    compound['name'] ??
-                                                        'Unknown Compound',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize:
-                                                          baseFontSize + 4.0,
-                                                      color: Colors.white,
-                                                    ),
+                                child: Card(
+                                  margin: EdgeInsets.zero,
+                                  clipBehavior: Clip.antiAlias,
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ChatWidget(compoundData: compound),
+                                        ),
+                                      );
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // Image Section
+                                              Container(
+                                                width: 100,
+                                                height: 100,
+                                                clipBehavior: Clip.antiAlias,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white.withValues(
+                                                    alpha: 0.08,
                                                   ),
-                                                  const SizedBox(height: 4),
-                                                  Theme(
-                                                    data: theme.copyWith(
-                                                      textTheme: theme.textTheme
-                                                          .copyWith(
-                                                            headlineSmall:
-                                                                TextStyle(
-                                                                  fontSize:
-                                                                      baseFontSize +
-                                                                      2,
-                                                                ),
-                                                            titleLarge: TextStyle(
-                                                              fontSize:
-                                                                  baseFontSize +
-                                                                  1,
-                                                            ),
-                                                            titleMedium: TextStyle(
-                                                              fontSize:
-                                                                  baseFontSize,
-                                                            ),
-                                                          ),
-                                                    ),
-                                                    child: GptMarkdown(
-                                                      'ID: ${compound['cid'] ?? 'N/A'}',
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                ),
+                                                child: imageUrl != null
+                                                    ? OverflowBox(
+                                                        maxWidth: 187,
+                                                        maxHeight: 187,
+                                                        child: Image.network(
+                                                          imageUrl,
+                                                          width: 187,
+                                                          height: 187,
+                                                          fit: BoxFit.contain,
+                                                          errorBuilder:
+                                                              (c, e, s) =>
+                                                                  const Icon(
+                                                                    Icons.science,
+                                                                    size: 40,
+                                                                  ),
+                                                        ),
+                                                      )
+                                                    : const Icon(
+                                                        Icons.science,
+                                                        size: 40,
+                                                      ),
+                                              ),
+                                              const SizedBox(width: 16),
+                                              // Title & Basic Info
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      compound['name'] ??
+                                                          'Unknown Compound',
                                                       style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
                                                         fontSize:
-                                                            baseFontSize - 2.0,
+                                                            baseFontSize + 4.0,
                                                         color: Colors.white,
                                                       ),
                                                     ),
-                                                  ),
-                                                  const SizedBox(height: 8),
-                                                  FutureBuilder<String>(
-                                                    future: getPublicationCount(
-                                                      cid ?? '',
-                                                    ),
-                                                    builder: (context, snapshot) {
-                                                      return Container(
-                                                        padding:
-                                                            const EdgeInsets.symmetric(
-                                                              horizontal: 8,
-                                                              vertical: 4,
+                                                    const SizedBox(height: 4),
+                                                    Theme(
+                                                      data: theme.copyWith(
+                                                        textTheme: theme.textTheme
+                                                            .copyWith(
+                                                              headlineSmall:
+                                                                  TextStyle(
+                                                                    fontSize:
+                                                                        baseFontSize +
+                                                                        2,
+                                                                  ),
+                                                              titleLarge: TextStyle(
+                                                                fontSize:
+                                                                    baseFontSize +
+                                                                    1,
+                                                              ),
+                                                              titleMedium: TextStyle(
+                                                                fontSize:
+                                                                    baseFontSize,
+                                                              ),
                                                             ),
-                                                        decoration: BoxDecoration(
-                                                          color:
-                                                              const Color(
-                                                                0xFF6366F1,
-                                                              ).withValues(
-                                                                alpha: 0.1,
+                                                      ),
+                                                      child: GptMarkdown(
+                                                        'ID: ${compound['cid'] ?? 'N/A'}',
+                                                        style: TextStyle(
+                                                          fontSize:
+                                                              baseFontSize - 2.0,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    FutureBuilder<String>(
+                                                      future: getPublicationCount(
+                                                        cid ?? '',
+                                                      ),
+                                                      builder: (context, snapshot) {
+                                                        return Container(
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 8,
+                                                                vertical: 4,
                                                               ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                8,
-                                                              ),
-                                                          border: Border.all(
+                                                          decoration: BoxDecoration(
                                                             color:
                                                                 const Color(
                                                                   0xFF6366F1,
                                                                 ).withValues(
-                                                                  alpha: 0.3,
+                                                                  alpha: 0.1,
                                                                 ),
-                                                          ),
-                                                        ),
-                                                        child: Row(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            Icon(
-                                                              Icons
-                                                                  .article_outlined,
-                                                              size: 14,
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  8,
+                                                                ),
+                                                            border: Border.all(
                                                               color:
                                                                   const Color(
                                                                     0xFF6366F1,
+                                                                  ).withValues(
+                                                                    alpha: 0.3,
                                                                   ),
                                                             ),
-                                                            const SizedBox(
-                                                              width: 4,
-                                                            ),
-                                                            Text(
-                                                              '${snapshot.data ?? "..."} Citations',
-                                                              style: TextStyle(
-                                                                fontSize:
-                                                                    baseFontSize -
-                                                                    3.0,
+                                                          ),
+                                                          child: Row(
+                                                            mainAxisSize:
+                                                                MainAxisSize.min,
+                                                            children: [
+                                                              Icon(
+                                                                Icons
+                                                                    .article_outlined,
+                                                                size: 14,
                                                                 color:
                                                                     const Color(
-                                                                      0xFF818CF8,
+                                                                      0xFF6366F1,
                                                                     ),
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
                                                               ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
-                                                ],
+                                                              const SizedBox(
+                                                                width: 4,
+                                                              ),
+                                                              Text(
+                                                                '${snapshot.data ?? "..."} Citations',
+                                                                style: TextStyle(
+                                                                  fontSize:
+                                                                      baseFontSize -
+                                                                      3.0,
+                                                                  color:
+                                                                      const Color(
+                                                                        0xFF818CF8,
+                                                                      ),
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        );
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 16),
-                                        // Properties Grid/List
-                                        Wrap(
-                                          spacing: 8,
-                                          runSpacing: 8,
-                                          children: compound.entries
-                                              .where(
-                                                (e) =>
-                                                    e.key != 'name' &&
-                                                    e.key != 'cid',
-                                              )
-                                              .map(
-                                                (e) => Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 10,
-                                                        vertical: 6,
+                                            ],
+                                          ),
+                                          const SizedBox(height: 16),
+                                          // Properties Grid/List
+                                          Wrap(
+                                            spacing: 8,
+                                            runSpacing: 8,
+                                            children: compound.entries
+                                                .where(
+                                                  (e) =>
+                                                      e.key != 'name' &&
+                                                      e.key != 'cid',
+                                                )
+                                                .map(
+                                                  (e) => Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 10,
+                                                          vertical: 6,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white
+                                                          .withValues(
+                                                            alpha: 0.05,
+                                                          ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                    child: Text(
+                                                      '${e.key}: ${e.value}',
+                                                      style: TextStyle(
+                                                        fontSize:
+                                                            baseFontSize - 2.0,
                                                       ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.white
-                                                        .withValues(
-                                                          alpha: 0.05,
-                                                        ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          10,
-                                                        ),
+                                                    ),
                                                   ),
-                                                  child: Text(
-                                                    '${e.key}: ${e.value}',
-                                                    style: TextStyle(
-                                                      fontSize:
-                                                          baseFontSize - 2.0,
+                                                )
+                                                .toList(),
+                                          ),
+                                          const SizedBox(height: 16),
+                                          // Action Bar
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: ElevatedButton.icon(
+                                                  onPressed: () {
+                                                    final moleculeName =
+                                                        Uri.encodeComponent(
+                                                          compound['name'] ?? '',
+                                                        );
+                                                    final userDesc =
+                                                        Uri.encodeComponent(
+                                                          _searchController.text,
+                                                        );
+                                                    final scholarUrl =
+                                                        'https://scholar.google.com/scholar?q="$moleculeName"+$userDesc';
+                                                    launchUrl(
+                                                      Uri.parse(scholarUrl),
+                                                    );
+                                                  },
+                                                  icon: Icon(
+                                                    Icons.school_rounded,
+                                                    size: 18,
+                                                  ),
+                                                  label: Text('Scholar search'),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: const Color(
+                                                      0xFF6366F1,
+                                                    ),
+                                                    minimumSize: const Size(
+                                                      double.infinity,
+                                                      40,
                                                     ),
                                                   ),
                                                 ),
-                                              )
-                                              .toList(),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        // Action Bar
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: ElevatedButton.icon(
-                                                onPressed: () {
-                                                  final moleculeName =
-                                                      Uri.encodeComponent(
-                                                        compound['name'] ?? '',
-                                                      );
-                                                  final userDesc =
-                                                      Uri.encodeComponent(
-                                                        _searchController.text,
-                                                      );
-                                                  final scholarUrl =
-                                                      'https://scholar.google.com/scholar?q="$moleculeName"+$userDesc';
-                                                  launchUrl(
-                                                    Uri.parse(scholarUrl),
-                                                  );
-                                                },
+                                              ),
+                                              const SizedBox(width: 8),
+                                              // Save / bookmark toggle
+                                              IconButton.filledTonal(
+                                                onPressed: () =>
+                                                    _toggleSave(compound),
+                                                style: IconButton.styleFrom(
+                                                  backgroundColor:
+                                                      _isSaved(compound)
+                                                      ? const Color(0xFF6366F1)
+                                                      : Colors.white.withValues(
+                                                          alpha: 0.07,
+                                                        ),
+                                                ),
                                                 icon: Icon(
-                                                  Icons.school_rounded,
-                                                  size: 18,
+                                                  _isSaved(compound)
+                                                      ? Icons.bookmark_rounded
+                                                      : Icons
+                                                            .bookmark_border_rounded,
+                                                  size: 20,
+                                                  color: _isSaved(compound)
+                                                      ? Colors.white
+                                                      : Colors.white54,
                                                 ),
-                                                label: Text('Scholar search'),
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: const Color(
-                                                    0xFF6366F1,
+                                                tooltip: _isSaved(compound)
+                                                    ? 'Remove from saved'
+                                                    : 'Save compound',
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+      
+                        // ── Saved Compounds Section ─────────────────────────
+                        if (_savedCompounds.isNotEmpty) ...[
+                          const SizedBox(height: 32),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.bookmark_rounded,
+                                color: Color(0xFF6366F1),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Saved Compounds (${_savedCompounds.length})',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: baseFontSize + 2.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          ListView.separated(
+                            physics: const NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            padding: const EdgeInsets.only(bottom: 40),
+                            itemCount: _savedCompounds.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (ctx, i) {
+                              final c = _savedCompounds[i];
+                              final cid = c['cid']?.toString();
+                              return Material(
+                                color: Colors.white.withValues(alpha: 0.04),
+                                borderRadius: BorderRadius.circular(20),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(20),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            ChatWidget(compoundData: c),
+                                      ),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(14),
+                                    child: Row(
+                                      children: [
+                                        // Molecule thumbnail
+                                        Container(
+                                          width: 60,
+                                          height: 60,
+                                          clipBehavior: Clip.antiAlias,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.08,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: cid != null
+                                              ? OverflowBox(
+                                                  maxWidth: 100,
+                                                  maxHeight: 100,
+                                                  child: Image.network(
+                                                    'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/PNG',
+                                                    width: 100,
+                                                    height: 100,
+                                                    fit: BoxFit.contain,
+                                                    errorBuilder: (_, __, ___) =>
+                                                        const Icon(
+                                                          Icons.science,
+                                                          size: 32,
+                                                        ),
                                                   ),
-                                                  minimumSize: const Size(
-                                                    double.infinity,
-                                                    40,
-                                                  ),
+                                                )
+                                              : const Icon(
+                                                  Icons.science,
+                                                  size: 32,
+                                                ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        // Name & CID
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                c['name'] ?? 'Unknown',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: baseFontSize,
                                                 ),
                                               ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            // Save / bookmark toggle
-                                            IconButton.filledTonal(
-                                              onPressed: () =>
-                                                  _toggleSave(compound),
-                                              style: IconButton.styleFrom(
-                                                backgroundColor:
-                                                    _isSaved(compound)
-                                                    ? const Color(0xFF6366F1)
-                                                    : Colors.white.withValues(
-                                                        alpha: 0.07,
-                                                      ),
-                                              ),
-                                              icon: Icon(
-                                                _isSaved(compound)
-                                                    ? Icons.bookmark_rounded
-                                                    : Icons
-                                                          .bookmark_border_rounded,
-                                                size: 20,
-                                                color: _isSaved(compound)
-                                                    ? Colors.white
-                                                    : Colors.white54,
-                                              ),
-                                              tooltip: _isSaved(compound)
-                                                  ? 'Remove from saved'
-                                                  : 'Save compound',
-                                            ),
-                                          ],
+                                              const SizedBox(height: 4),
+                                              if (cid != null)
+                                                Text(
+                                                  'CID: $cid',
+                                                  style: TextStyle(
+                                                    color: Colors.white
+                                                        .withValues(alpha: 0.4),
+                                                    fontSize: baseFontSize - 4,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                        // Remove button
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.bookmark_remove_rounded,
+                                            color: Colors.redAccent,
+                                            size: 22,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _savedCompounds.removeAt(i);
+                                            });
+                                            _persistSaved();
+                                          },
                                         ),
                                       ],
                                     ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-
-                      // ── Saved Compounds Section ─────────────────────────
-                      if (_savedCompounds.isNotEmpty) ...[
-                        const SizedBox(height: 32),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.bookmark_rounded,
-                              color: Color(0xFF6366F1),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Saved Compounds (${_savedCompounds.length})',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: baseFontSize + 2.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        ListView.separated(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          padding: const EdgeInsets.only(bottom: 40),
-                          itemCount: _savedCompounds.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (ctx, i) {
-                            final c = _savedCompounds[i];
-                            final cid = c['cid']?.toString();
-                            return Material(
-                              color: Colors.white.withValues(alpha: 0.04),
-                              borderRadius: BorderRadius.circular(20),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(20),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          ChatWidget(compoundData: c),
-                                    ),
-                                  );
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(14),
-                                  child: Row(
-                                    children: [
-                                      // Molecule thumbnail
-                                      Container(
-                                        width: 60,
-                                        height: 60,
-                                        clipBehavior: Clip.antiAlias,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.08,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        child: cid != null
-                                            ? OverflowBox(
-                                                maxWidth: 100,
-                                                maxHeight: 100,
-                                                child: Image.network(
-                                                  'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/PNG',
-                                                  width: 100,
-                                                  height: 100,
-                                                  fit: BoxFit.contain,
-                                                  errorBuilder: (_, __, ___) =>
-                                                      const Icon(
-                                                        Icons.science,
-                                                        size: 32,
-                                                      ),
-                                                ),
-                                              )
-                                            : const Icon(
-                                                Icons.science,
-                                                size: 32,
-                                              ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      // Name & CID
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              c['name'] ?? 'Unknown',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: baseFontSize,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            if (cid != null)
-                                              Text(
-                                                'CID: $cid',
-                                                style: TextStyle(
-                                                  color: Colors.white
-                                                      .withValues(alpha: 0.4),
-                                                  fontSize: baseFontSize - 4,
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                      // Remove button
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.bookmark_remove_rounded,
-                                          color: Colors.redAccent,
-                                          size: 22,
-                                        ),
-                                        onPressed: () {
-                                          setState(() {
-                                            _savedCompounds.removeAt(i);
-                                          });
-                                          _persistSaved();
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                              );
+                            },
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

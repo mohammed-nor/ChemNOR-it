@@ -157,161 +157,163 @@ class _ChatWidgetState extends State<ChatWidget> {
         borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary),
       ),
     );
-    return Stack(
-      children: [
-        // Premium Designed Background
-        Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF0F172A), Color(0xFF020617)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+    return SafeArea(
+      child: Stack(
+        children: [
+          // Premium Designed Background
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -100,
+                  right: -100,
+                  child: Container(
+                    width: 400,
+                    height: 400,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: -150,
+                  left: -150,
+                  child: Container(
+                    width: 500,
+                    height: 500,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                top: -100,
-                right: -100,
-                child: Container(
-                  width: 400,
-                  height: 400,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFF6366F1).withValues(alpha: 0.08),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: -150,
-                left: -150,
-                child: Container(
-                  width: 500,
-                  height: 500,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
 
-        SafeArea(
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            appBar: AppBar(
+          SafeArea(
+            child: Scaffold(
               backgroundColor: Colors.transparent,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              surfaceTintColor: Colors.transparent,
-              centerTitle: true,
-              title: RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
+              appBar: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                scrolledUnderElevation: 0,
+                surfaceTintColor: Colors.transparent,
+                centerTitle: true,
+                title: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'ChemNOR ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontSize: baseFontSize + 4.0,
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'it! ',
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: Colors.redAccent,
+                          fontSize: baseFontSize,
+                        ),
+                      ),
+                      TextSpan(
+                        text: widget.compoundData?['name'] != null
+                            ? 'Chat: ${widget.compoundData!['name']}'
+                            : 'Chat',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: baseFontSize,
+                          fontWeight: FontWeight.w300,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              body: Padding(
+                padding: const EdgeInsets.all(0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextSpan(
-                      text: 'ChemNOR ',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontSize: baseFontSize + 4.0,
+                    Expanded(
+                      child: ListView.builder(
+                        physics: const ClampingScrollPhysics(),
+                        controller: _scrollController,
+                        itemBuilder: (context, idx) {
+                          final content = _generatedContent[idx];
+                          return MessageWidget(
+                            text: content.text,
+                            image: content.image,
+                            isFromUser: content.fromUser,
+                          );
+                        },
+                        itemCount: _generatedContent.length,
                       ),
                     ),
-                    TextSpan(
-                      text: 'it! ',
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        color: Colors.redAccent,
-                        fontSize: baseFontSize,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 16,
                       ),
-                    ),
-                    TextSpan(
-                      text: widget.compoundData?['name'] != null
-                          ? 'Chat: ${widget.compoundData!['name']}'
-                          : 'Chat',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: baseFontSize,
-                        fontWeight: FontWeight.w300,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(24),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              style: TextStyle(
+                                fontSize: baseFontSize,
+                                color: Colors.white,
+                              ),
+                              autofocus: true,
+                              focusNode: _textFieldFocus,
+                              decoration: textFieldDecoration,
+                              controller: _textController,
+                              onSubmitted: _sendChatMessage,
+                            ),
+                          ),
+                          const SizedBox.square(dimension: 15),
+
+                          if (!_loading)
+                            IconButton(
+                              onPressed: () async {
+                                _sendChatMessage(_textController.text);
+                              },
+                              icon: Icon(
+                                Icons.send,
+                                size: baseFontSize + 4,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            )
+                          else
+                            const CircularProgressIndicator(),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-            body: Padding(
-              padding: const EdgeInsets.all(0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: ListView.builder(
-                      physics: const ClampingScrollPhysics(),
-                      controller: _scrollController,
-                      itemBuilder: (context, idx) {
-                        final content = _generatedContent[idx];
-                        return MessageWidget(
-                          text: content.text,
-                          image: content.image,
-                          isFromUser: content.fromUser,
-                        );
-                      },
-                      itemCount: _generatedContent.length,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 12,
-                      horizontal: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(24),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            style: TextStyle(
-                              fontSize: baseFontSize,
-                              color: Colors.white,
-                            ),
-                            autofocus: true,
-                            focusNode: _textFieldFocus,
-                            decoration: textFieldDecoration,
-                            controller: _textController,
-                            onSubmitted: _sendChatMessage,
-                          ),
-                        ),
-                        const SizedBox.square(dimension: 15),
-
-                        if (!_loading)
-                          IconButton(
-                            onPressed: () async {
-                              _sendChatMessage(_textController.text);
-                            },
-                            icon: Icon(
-                              Icons.send,
-                              size: baseFontSize + 4,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          )
-                        else
-                          const CircularProgressIndicator(),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -811,281 +813,283 @@ class _ChatPageState extends State<ChatPage> {
       ),
     );
 
-    return Stack(
-      children: [
-        // Premium Designed Background
-        Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF0F172A), Color(0xFF020617)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+    return SafeArea(
+      child: Stack(
+        children: [
+          // Premium Designed Background
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                top: -100,
-                right: -100,
-                child: Container(
-                  width: 400,
-                  height: 400,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFF6366F1).withValues(alpha: 0.08),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: -150,
-                left: -150,
-                child: Container(
-                  width: 500,
-                  height: 500,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        SafeArea(
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 2, bottom: 6),
-                      child: RichText(
-                        textAlign: TextAlign.center,
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'ChemNOR ',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontSize: baseFontSize + 4.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'it! ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.redAccent,
-                                fontSize: baseFontSize,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'Chat\n',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: baseFontSize,
-                                fontWeight: FontWeight.w300,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'C',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'hemical ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'H',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'euristic ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'E',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'valuation of ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'M',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'olecules ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'N',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'etworking for ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'O',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'ptimized ',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'R',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'eactivity',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                                fontSize: baseFontSize - 7.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      itemBuilder: (context, idx) {
-                        final message = _chatMessages[idx];
-                        return MessageBubble(
-                          text: message.text,
-                          image: message.image,
-                          isFromUser: message.fromUser,
-                        );
-                      },
-                      itemCount: _chatMessages.length,
-                    ),
-                  ),
-                  if (_loading)
-                    Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: CircularProgressIndicator(),
-                    ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 6,
-                      horizontal: 6,
-                    ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -100,
+                  right: -100,
+                  child: Container(
+                    width: 400,
+                    height: 400,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(6),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          onPressed: _clearChat,
-                          icon: Icon(
-                            Icons.refresh_rounded,
-                            size: baseFontSize + 2,
-                          ),
-                          tooltip: 'Reinitialize Chat',
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: Colors.redAccent,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            style: TextStyle(
-                              fontSize: baseFontSize,
-                              color: Colors.white,
-                            ),
-                            focusNode: _textFieldFocus,
-                            controller: _textController,
-                            decoration: textFieldDecoration,
-                            onSubmitted: (value) => _sendMessage(value),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          onPressed: !_loading
-                              ? () => _sendMessage(_textController.text)
-                              : null,
-                          icon: Icon(
-                            Icons.send_rounded,
-                            size: baseFontSize + 4,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                      ],
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.08),
                     ),
                   ),
-                ],
+                ),
+                Positioned(
+                  bottom: -150,
+                  left: -150,
+                  child: Container(
+                    width: 500,
+                    height: 500,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF4F46E5).withValues(alpha: 0.05),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          SafeArea(
+            child: Scaffold(
+              backgroundColor: Colors.transparent,
+              body: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 2, bottom: 6),
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'ChemNOR ',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontSize: baseFontSize + 4.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'it! ',
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.redAccent,
+                                  fontSize: baseFontSize,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'Chat\n',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: baseFontSize,
+                                  fontWeight: FontWeight.w300,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'C',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                  fontSize: baseFontSize - 7.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'hemical ',
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.grey,
+                                  fontSize: baseFontSize - 7.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'H',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                  fontSize: baseFontSize - 7.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'euristic ',
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.grey,
+                                  fontSize: baseFontSize - 7.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'E',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                  fontSize: baseFontSize - 7.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'valuation of ',
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.grey,
+                                  fontSize: baseFontSize - 7.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'M',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                  fontSize: baseFontSize - 7.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'olecules ',
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.grey,
+                                  fontSize: baseFontSize - 7.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'N',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                  fontSize: baseFontSize - 7.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'etworking for ',
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.grey,
+                                  fontSize: baseFontSize - 7.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'O',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                  fontSize: baseFontSize - 7.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'ptimized ',
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.grey,
+                                  fontSize: baseFontSize - 7.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'R',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                  fontSize: baseFontSize - 7.0,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'eactivity',
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.grey,
+                                  fontSize: baseFontSize - 7.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        itemBuilder: (context, idx) {
+                          final message = _chatMessages[idx];
+                          return MessageBubble(
+                            text: message.text,
+                            image: message.image,
+                            isFromUser: message.fromUser,
+                          );
+                        },
+                        itemCount: _chatMessages.length,
+                      ),
+                    ),
+                    if (_loading)
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: LinearProgressIndicator(),
+                      ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 6,
+                        horizontal: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(6),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: _clearChat,
+                            icon: Icon(
+                              Icons.refresh_rounded,
+                              size: baseFontSize + 2,
+                            ),
+                            tooltip: 'Reinitialize Chat',
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              foregroundColor: Colors.redAccent,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              style: TextStyle(
+                                fontSize: baseFontSize,
+                                color: Colors.white,
+                              ),
+                              focusNode: _textFieldFocus,
+                              controller: _textController,
+                              decoration: textFieldDecoration,
+                              onSubmitted: (value) => _sendMessage(value),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: !_loading
+                                ? () => _sendMessage(_textController.text)
+                                : null,
+                            icon: Icon(
+                              Icons.send_rounded,
+                              size: baseFontSize + 4,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
