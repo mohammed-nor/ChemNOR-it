@@ -21,9 +21,10 @@ import '../services/chemnor_api.dart'; // API service for AI interaction
 class ChatWidget extends StatefulWidget {
   // Optional compound data to provide context for the chat
   final Map<String, dynamic>? compoundData;
+  final String task;
 
   // Constructor with optional compound data
-  const ChatWidget({super.key, this.compoundData});
+  const ChatWidget({super.key, this.compoundData, required this.task});
 
   @override
   State<ChatWidget> createState() => _ChatWidgetState();
@@ -63,8 +64,7 @@ class _ChatWidgetState extends State<ChatWidget> {
 
       // Create initial prompt with compound context
       final initialPrompt =
-          "Let's discuss the following chemical compound:\n$compoundInfo\n"
-          "As an expert chemistry assistant. Answering questions and provide insights about this compound based on its data above.";
+          "Let's discuss the following chemical compound:\n$compoundInfo\n and how it can be used to achieve the task (if exists): \n${widget.task}\n As an expert chemistry assistant. Answering questions and provide insights about this compound based on its data above and the task.";
 
       // Send initial message to AI
       _sendInitialCompoundMessage(initialPrompt);

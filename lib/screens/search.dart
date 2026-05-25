@@ -389,7 +389,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                 ],
               ),
             ),
-      
+
             // Main Content
             CustomScrollView(
               physics: const ClampingScrollPhysics(),
@@ -659,9 +659,9 @@ class _SearchWidgetState extends State<SearchWidget> {
                               ),
                             ),
                           ),
-      
+
                         // ── Progress / Error / Results ──────────────────────
-      
+
                         // Active search progress (not idle, not done, not error)
                         if (_progress != SearchProgress.idle &&
                             _progress != SearchProgress.complete &&
@@ -777,14 +777,16 @@ class _SearchWidgetState extends State<SearchWidget> {
                               final imageUrl = cid != null
                                   ? 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/$cid/PNG'
                                   : null;
-      
+
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 20),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(24),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.2),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.2,
+                                      ),
                                       blurRadius: 15,
                                       offset: const Offset(0, 8),
                                     ),
@@ -798,8 +800,10 @@ class _SearchWidgetState extends State<SearchWidget> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) =>
-                                              ChatWidget(compoundData: compound),
+                                          builder: (context) => ChatWidget(
+                                            compoundData: compound,
+                                            task: _searchController.text,
+                                          ),
                                         ),
                                       );
                                     },
@@ -819,9 +823,8 @@ class _SearchWidgetState extends State<SearchWidget> {
                                                 height: 100,
                                                 clipBehavior: Clip.antiAlias,
                                                 decoration: BoxDecoration(
-                                                  color: Colors.white.withValues(
-                                                    alpha: 0.08,
-                                                  ),
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.08),
                                                   borderRadius:
                                                       BorderRadius.circular(16),
                                                 ),
@@ -835,11 +838,14 @@ class _SearchWidgetState extends State<SearchWidget> {
                                                           height: 187,
                                                           fit: BoxFit.contain,
                                                           errorBuilder:
-                                                              (c, e, s) =>
-                                                                  const Icon(
-                                                                    Icons.science,
-                                                                    size: 40,
-                                                                  ),
+                                                              (
+                                                                c,
+                                                                e,
+                                                                s,
+                                                              ) => const Icon(
+                                                                Icons.science,
+                                                                size: 40,
+                                                              ),
                                                         ),
                                                       )
                                                     : const Icon(
@@ -868,39 +874,40 @@ class _SearchWidgetState extends State<SearchWidget> {
                                                     const SizedBox(height: 4),
                                                     Theme(
                                                       data: theme.copyWith(
-                                                        textTheme: theme.textTheme
-                                                            .copyWith(
-                                                              headlineSmall:
-                                                                  TextStyle(
-                                                                    fontSize:
-                                                                        baseFontSize +
-                                                                        2,
-                                                                  ),
-                                                              titleLarge: TextStyle(
+                                                        textTheme: theme.textTheme.copyWith(
+                                                          headlineSmall:
+                                                              TextStyle(
                                                                 fontSize:
                                                                     baseFontSize +
-                                                                    1,
+                                                                    2,
                                                               ),
-                                                              titleMedium: TextStyle(
-                                                                fontSize:
-                                                                    baseFontSize,
-                                                              ),
-                                                            ),
+                                                          titleLarge: TextStyle(
+                                                            fontSize:
+                                                                baseFontSize +
+                                                                1,
+                                                          ),
+                                                          titleMedium: TextStyle(
+                                                            fontSize:
+                                                                baseFontSize,
+                                                          ),
+                                                        ),
                                                       ),
                                                       child: GptMarkdown(
                                                         'ID: ${compound['cid'] ?? 'N/A'}',
                                                         style: TextStyle(
                                                           fontSize:
-                                                              baseFontSize - 2.0,
+                                                              baseFontSize -
+                                                              2.0,
                                                           color: Colors.white,
                                                         ),
                                                       ),
                                                     ),
                                                     const SizedBox(height: 8),
                                                     FutureBuilder<String>(
-                                                      future: getPublicationCount(
-                                                        cid ?? '',
-                                                      ),
+                                                      future:
+                                                          getPublicationCount(
+                                                            cid ?? '',
+                                                          ),
                                                       builder: (context, snapshot) {
                                                         return Container(
                                                           padding:
@@ -930,7 +937,8 @@ class _SearchWidgetState extends State<SearchWidget> {
                                                           ),
                                                           child: Row(
                                                             mainAxisSize:
-                                                                MainAxisSize.min,
+                                                                MainAxisSize
+                                                                    .min,
                                                             children: [
                                                               Icon(
                                                                 Icons
@@ -950,10 +958,9 @@ class _SearchWidgetState extends State<SearchWidget> {
                                                                   fontSize:
                                                                       baseFontSize -
                                                                       3.0,
-                                                                  color:
-                                                                      const Color(
-                                                                        0xFF818CF8,
-                                                                      ),
+                                                                  color: const Color(
+                                                                    0xFF818CF8,
+                                                                  ),
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w600,
@@ -1017,11 +1024,13 @@ class _SearchWidgetState extends State<SearchWidget> {
                                                   onPressed: () {
                                                     final moleculeName =
                                                         Uri.encodeComponent(
-                                                          compound['name'] ?? '',
+                                                          compound['name'] ??
+                                                              '',
                                                         );
                                                     final userDesc =
                                                         Uri.encodeComponent(
-                                                          _searchController.text,
+                                                          _searchController
+                                                              .text,
                                                         );
                                                     final scholarUrl =
                                                         'https://scholar.google.com/scholar?q="$moleculeName"+$userDesc';
@@ -1034,15 +1043,17 @@ class _SearchWidgetState extends State<SearchWidget> {
                                                     size: 18,
                                                   ),
                                                   label: Text('Scholar search'),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: const Color(
-                                                      0xFF6366F1,
-                                                    ),
-                                                    minimumSize: const Size(
-                                                      double.infinity,
-                                                      40,
-                                                    ),
-                                                  ),
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                        backgroundColor:
+                                                            const Color(
+                                                              0xFF6366F1,
+                                                            ),
+                                                        minimumSize: const Size(
+                                                          double.infinity,
+                                                          40,
+                                                        ),
+                                                      ),
                                                 ),
                                               ),
                                               const SizedBox(width: 8),
@@ -1082,7 +1093,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                               );
                             },
                           ),
-      
+
                         // ── Saved Compounds Section ─────────────────────────
                         if (_savedCompounds.isNotEmpty) ...[
                           const SizedBox(height: 32),
@@ -1124,8 +1135,10 @@ class _SearchWidgetState extends State<SearchWidget> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) =>
-                                            ChatWidget(compoundData: c),
+                                        builder: (_) => ChatWidget(
+                                          compoundData: c,
+                                          task: _searchController.text,
+                                        ),
                                       ),
                                     );
                                   },
@@ -1155,11 +1168,12 @@ class _SearchWidgetState extends State<SearchWidget> {
                                                     width: 100,
                                                     height: 100,
                                                     fit: BoxFit.contain,
-                                                    errorBuilder: (_, __, ___) =>
-                                                        const Icon(
-                                                          Icons.science,
-                                                          size: 32,
-                                                        ),
+                                                    errorBuilder:
+                                                        (_, __, ___) =>
+                                                            const Icon(
+                                                              Icons.science,
+                                                              size: 32,
+                                                            ),
                                                   ),
                                                 )
                                               : const Icon(
